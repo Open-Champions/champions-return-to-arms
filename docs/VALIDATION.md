@@ -142,16 +142,17 @@ confirmed-death behavior. No observed trigger or no baseline failure means
 **inconclusive about a fix**. An alive-list discrepancy without a hash mismatch supports
 that narrower state finding; do not claim the full desync cause is proven.
 
-The alive-list section does **not** patch the separate PvP mana, score or orb side
-effects in G9/G10. Success in this co-op experiment must not be reported as a PvP
-reward fix.
+The alive-list section does **not** patch the separate PvP mana or orb side
+effects in G9/G10. The score functions already guard against the prediction copy;
+score remains a regression control, not an established unguarded side effect.
+Success in this co-op experiment must not be reported as a PvP reward fix.
 
 ## PvP prediction-copy death
 
 This tests G9/G10 separately. **No patch for the PvP reward side effects is supplied
 in the current patch folder.** Keep both the audio and alive-list sections disabled
 for this baseline. The alive-list patch changes a nearby call site but does not guard
-PvP mana, score or orb rewards.
+PvP mana or orb rewards.
 
 1. Exercise each of the two PvP modes separately, identifying which mode flag is
    active (`0x4f711c` or `0x4f7120`). Preserve starting health, mana, score, equipment,
