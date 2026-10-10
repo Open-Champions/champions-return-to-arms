@@ -210,10 +210,18 @@ def baseline_bytes(game, ledger):
 
 def verify(ledger, index_hash, game, compiler, output_dir, root=ROOT):
     baseline = baseline_bytes(game, ledger)
+    # Clang reads these outside argv, including with --no-default-config. Keep
+    # effective options tied to the reviewed ledger and never echo their values.
+    compiler_env = os.environ.copy()
+    for name in ('CCC_OVERRIDE_OPTIONS', 'CL', '_CL_'):
+        require(not compiler_env.get(name),
+                f'unset {name} before verification; environment compiler options are not recorded')
+        compiler_env.pop(name, None)
     executable = shutil.which(str(compiler))
     require(executable is not None, f'compiler not found: {compiler}')
     executable = str(Path(executable).resolve())
-    probe = subprocess.run([executable, '--no-default-config', '--version'], capture_output=True, timeout=15, check=False)
+    probe = subprocess.run([executable, '--no-default-config', '--version'], capture_output=True,
+                           timeout=15, check=False, env=compiler_env)
     require(probe.returncode == 0, 'compiler version probe failed')
     version = (probe.stdout + probe.stderr).decode('utf-8', errors='replace').strip().splitlines()
     output_dir = Path(output_dir)
@@ -234,7 +242,10 @@ def verify(ledger, index_hash, game, compiler, output_dir, root=ROOT):
         obj.unlink(missing_ok=True)  # Never accept a stale object from a failed compilation.
         command = [executable] + item['compiler_args'] + ['-c', str(source), '-o', str(obj.resolve())]
         try:
-            compiled = subprocess.run(command, cwd=root, capture_output=True, timeout=120, check=False)
+            compiled = subprocess.run(command, cwd=root, capture_output=True, timeout=120,
+                                      check=False, env=compiler_env)
+            require(digest(source.read_bytes()) == result['source_sha256'],
+                    'source changed during compilation; retry with stable inputs')
             if compiled.returncode != 0:
                 result['reason'] = f'compiler exited {compiled.returncode}; see private build log'
                 (output_dir / (item['id'] + '.log')).write_bytes(compiled.stdout + compiled.stderr)

@@ -2,12 +2,14 @@
 import contextlib
 import copy
 import json
+import os
 from pathlib import Path
 import struct
 import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 import xml.etree.ElementTree as ET
 
 import rebuild
@@ -68,19 +70,23 @@ class RebuildTests(unittest.TestCase):
         return rebuild.load_ledger(self.path, self.root)
 
     @contextlib.contextmanager
-    def compiler_fixture(self, object_data=None, returncode=0):
+    def compiler_fixture(self, object_data=None, returncode=0, source_mutation=None):
         previous_run, previous_which = rebuild.subprocess.run, rebuild.shutil.which
         calls = []
 
         def run(command, **kwargs):
             calls.append(command)
             self.assertNotIn('shell', kwargs)
+            self.assertIn('env', kwargs)
+            self.assertFalse(any(name in kwargs['env'] for name in ('CCC_OVERRIDE_OPTIONS', 'CL', '_CL_')))
             if command[-1] == '--version':
                 return subprocess.CompletedProcess(command, 0, b'Synthetic C++ compiler 1.0\n', b'')
             self.assertEqual(command[-3], str(self.source))
             self.assertEqual(command[-2], '-o')
             if returncode == 0:
                 Path(command[-1]).write_bytes(object_data or elf_fixture())
+            if source_mutation is not None:
+                source_mutation()
             return subprocess.CompletedProcess(command, returncode, b'', b'synthetic diagnostic')
 
         rebuild.shutil.which = lambda value: str(self.compiler)
@@ -139,6 +145,26 @@ class RebuildTests(unittest.TestCase):
         ledger['target']['text']['size'] = 8
         with self.assertRaisesRegex(ValueError, '.text'):
             rebuild.baseline_bytes(self.game, ledger)
+
+    def test_environment_compiler_options_fail_before_running_compiler(self):
+        ledger, _, index_hash = self.load()
+        for name in ('CCC_OVERRIDE_OPTIONS', 'CL', '_CL_'):
+            with self.subTest(name=name), patch.dict(os.environ, {name: 'private-option-value'}):
+                with self.compiler_fixture() as calls, self.assertRaises(ValueError) as failure:
+                    rebuild.verify(ledger, index_hash, self.game, self.compiler, self.output, self.root)
+                self.assertEqual(calls, [])
+                self.assertIn(name, str(failure.exception))
+                self.assertNotIn('private-option-value', str(failure.exception))
+
+    def test_changed_source_cannot_receive_a_matching_receipt(self):
+        ledger, _, index_hash = self.load()
+        def change_source():
+            self.source.write_text('extern "C" unsigned candidate() { return 2; }\n', encoding='utf-8')
+        with self.compiler_fixture(source_mutation=change_source):
+            report = rebuild.verify(ledger, index_hash, self.game, self.compiler, self.output, self.root)
+        self.assertEqual(report['functions'][0]['status'], 'failed')
+        self.assertIn('source changed during compilation', report['functions'][0]['reason'])
+        self.assertNotIn('rebuilt_sha256', report['functions'][0])
 
     def test_ledger_rejects_interior_partial_and_duplicate_entries(self):
         valid = copy.deepcopy(self.ledger)
