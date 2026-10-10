@@ -31,3 +31,12 @@ __pycache__/
 /.github/ISSUE_TEMPLATE/*
 !/.github/ISSUE_TEMPLATE/research.md
 !/.github/ISSUE_TEMPLATE/runtime-bug.md
+
+# Authored native sources; build outputs and game-derived data remain ignored.
+!/native/
+/native/*
+!/native/CMakeLists.txt
+!/native/README.md
+!/native/include/
+!/native/src/
+!/native/tests/

@@ -76,6 +76,18 @@ class ToolFixtures(unittest.TestCase):
         self.assertNotIn('00001010: nop', out)
         self.assertEqual(err, '')
 
+    def test_windows_utf16_disassembly_and_metadata(self):
+        self.body()
+        for relative in ('ghidra_funcs.tsv', 'names.tsv', 'disasm/text.asm'):
+            path = self.root / relative
+            content = path.read_text(encoding='utf-8')
+            path.write_bytes(content.replace('\n', '\r\n').encode('utf-16'))
+        status, out, err = self.run_dis('1008', 'all')
+        self.assertEqual(status, 0)
+        self.assertIn('fixture_entry', out)
+        self.assertIn('0000100c: nop', out)
+        self.assertEqual(err, '')
+
     def test_discontiguous_body_from_secondary_range(self):
         self.body('00001000-00001007,00001018-0000101f')
         status, out, err = self.run_dis('101c', 'all')
@@ -169,6 +181,7 @@ class ToolFixtures(unittest.TestCase):
         fixture_tools.mkdir()
         script = fixture_tools / 'symtab.py'
         shutil.copyfile(TOOLS / 'symtab.py', script)
+        shutil.copyfile(TOOLS / 'textinput.py', fixture_tools / 'textinput.py')
         output = self.root / 'merged.tsv'
         original = b'EXISTING OUTPUT\x00\xff'
         for row, diagnostic in [('00001000\tconflicting\n', 'conflict'),

@@ -5,6 +5,7 @@ import sys, re, os, collections
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from ps2elf import Elf
 import symtab
+from textinput import text_lines
 
 def main():
     e = Elf(sys.argv[1]); e.analyze()
@@ -17,7 +18,7 @@ def main():
     loads = {'lw','lh','lhu','lb','lbu','lwc1','ld','lwu','lq'}
     stores = {'sw','sh','sb','swc1','sd','sq'}
     hits = collections.defaultdict(list)
-    for l in open(os.path.join(root, 'disasm/text.asm')):
+    for l in text_lines(os.path.join(root, 'disasm/text.asm')):
         m = pat.match(l)
         if not m: continue
         op = m.group(2)

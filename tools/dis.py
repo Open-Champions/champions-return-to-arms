@@ -13,6 +13,7 @@ import os, re, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from ps2elf import Elf
 import symtab
+from textinput import text_lines
 
 
 def load_names(base):
@@ -24,27 +25,26 @@ def ghidra_function(base, addr):
     path = os.path.join(base, "ghidra_funcs.tsv")
     if not os.path.exists(path):
         return None
-    with open(path, encoding="utf-8") as f:
-        for n, line in enumerate(f, 1):
-            if not line.strip() or line.startswith("#"):
-                continue
-            try:
-                entry, name, body = line.rstrip("\n").split("\t")
-                entry = int(entry, 16)
-                ranges = []
-                for part in body.split(","):
-                    if not part:
-                        continue
-                    lo, hi = (int(x, 16) for x in part.split("-"))
-                    if hi < lo:
-                        raise ValueError("reversed body range")
-                    ranges.append((lo, hi + 1))  # Ghidra exports inclusive byte ends.
-                if not ranges:
-                    raise ValueError("empty body")
-            except ValueError as exc:
-                raise ValueError(f"{path}:{n}: malformed function body") from exc
-            if any(lo <= addr < hi for lo, hi in ranges):
-                return entry, sorted(ranges)
+    for n, line in enumerate(text_lines(path), 1):
+        if not line.strip() or line.startswith("#"):
+            continue
+        try:
+            entry, name, body = line.rstrip("\n").split("\t")
+            entry = int(entry, 16)
+            ranges = []
+            for part in body.split(","):
+                if not part:
+                    continue
+                lo, hi = (int(x, 16) for x in part.split("-"))
+                if hi < lo:
+                    raise ValueError("reversed body range")
+                ranges.append((lo, hi + 1))  # Ghidra exports inclusive byte ends.
+            if not ranges:
+                raise ValueError("empty body")
+        except ValueError as exc:
+            raise ValueError(f"{path}:{n}: malformed function body") from exc
+        if any(lo <= addr < hi for lo, hi in ranges):
+            return entry, sorted(ranges)
     return None
 
 
@@ -90,30 +90,29 @@ def main(argv=None):
               f"[{source}; end-exclusive ranges: {spans}]")
         n = 0
         total = 0
-        with open(os.path.join(base, "disasm", "text.asm")) as f:
-            for line in f:
-                m = re.match(r"\s*([0-9a-fA-F]+):\s+(.*)", line)
-                if not m:
-                    continue
-                pc = int(m.group(1), 16)
-                if not any(lo <= pc < hi for lo, hi in ranges):
-                    continue
-                total += 1
-                if maxl and n >= maxl:
-                    continue
-                ins = re.sub(r"\s*<\.text\+0x[0-9a-f]+>", "", m.group(2)).replace("\t", " ")
-                note = ""
-                if pc in site2tgt:
-                    tg = site2tgt[pc]
-                    st = e.cstr(tg)
-                    note = f"  ; -> 0x{tg:08x}" + (f" {st!r}" if st else "") + (f" [{names[tg]}]" if tg in names else "")
-                mj = re.match(r"jal\s+0x([0-9a-f]+)", ins)
-                if mj:
-                    tg = int(mj.group(1), 16)
-                    if tg in names:
-                        note += f"  ; {names[tg]}"
-                print(f"{pc:08x}: {ins}{note}")
-                n += 1
+        for line in text_lines(os.path.join(base, "disasm", "text.asm")):
+            m = re.match(r"\s*([0-9a-fA-F]+):\s+(.*)", line)
+            if not m:
+                continue
+            pc = int(m.group(1), 16)
+            if not any(lo <= pc < hi for lo, hi in ranges):
+                continue
+            total += 1
+            if maxl and n >= maxl:
+                continue
+            ins = re.sub(r"\s*<\.text\+0x[0-9a-f]+>", "", m.group(2)).replace("\t", " ")
+            note = ""
+            if pc in site2tgt:
+                tg = site2tgt[pc]
+                st = e.cstr(tg)
+                note = f"  ; -> 0x{tg:08x}" + (f" {st!r}" if st else "") + (f" [{names[tg]}]" if tg in names else "")
+            mj = re.match(r"jal\s+0x([0-9a-f]+)", ins)
+            if mj:
+                tg = int(mj.group(1), 16)
+                if tg in names:
+                    note += f"  ; {names[tg]}"
+            print(f"{pc:08x}: {ins}{note}")
+            n += 1
         if total > n:
             print(f"; truncated: shown {n} of {total} instructions ({total - n} omitted); "
                   "use max_lines=all (positional 'all') for the full listing")

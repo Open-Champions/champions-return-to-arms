@@ -12,12 +12,13 @@ Virtual calls are not followed. Default range is the slot-0 player record."""
 import sys, re, os, bisect, pickle, collections
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import symtab
+from textinput import text_lines
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def load_funcs():
     funcs = []
-    for l in open(os.path.join(ROOT, 'ghidra_funcs.tsv')):
+    for l in text_lines(os.path.join(ROOT, 'ghidra_funcs.tsv')):
         ent, name, body = l.rstrip('\n').split('\t')
         rs = [tuple(int(x, 16) for x in r.split('-')) for r in body.split(',') if r]
         funcs.append((int(ent, 16), name, min(r[0] for r in rs), max(r[1] for r in rs)))
@@ -31,7 +32,7 @@ def load_ins():
         return pickle.load(open(cache, 'rb'))
     pat = re.compile(r'^\s*([0-9a-f]+):\s+(\S+)\s*(.*)$')
     ins = []
-    for l in open(src):
+    for l in text_lines(src):
         m = pat.match(l)
         if m:
             ins.append((int(m.group(1), 16), m.group(2), m.group(3).split('<')[0].strip()))

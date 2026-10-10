@@ -6,6 +6,7 @@ import sys, re, os, collections
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from ps2elf import Elf
 import symtab
+from textinput import text_lines
 
 def main():
     e = Elf(sys.argv[1]); e.analyze()
@@ -15,7 +16,7 @@ def main():
     names = symtab.load(root)
     pat = re.compile(r'^\s*([0-9a-f]+):\s+(\S+)\s*(.*)$')
     ins = []
-    for l in open(os.path.join(root, 'disasm/text.asm')):
+    for l in text_lines(os.path.join(root, 'disasm/text.asm')):
         m = pat.match(l)
         if m: ins.append((int(m.group(1), 16), m.group(2), m.group(3)))
     hi = mask >> 16 if mask & 0xffff == 0 else None

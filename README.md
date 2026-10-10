@@ -14,7 +14,7 @@ fixing the bugs that put players "OUT OF SYNC" and make the game lag. The long-t
 a complete, readable account of how the game works.
 
 **This repository contains no game code and no game assets.** You need your own copy of the
-disc to use it. See [What may not be committed](CONTRIBUTING.md#what-may-not-be-committed).
+disc to analyze game files; basic tool checks and synthetic tests need no game data. See [What may not be committed](CONTRIBUTING.md#what-may-not-be-committed).
 
 ## Where it stands
 
@@ -46,22 +46,33 @@ disc to use it. See [What may not be committed](CONTRIBUTING.md#what-may-not-be-
 | `ghidra/scripts/` | Ghidra scripts: apply the symbol map, decompile everything |
 | `patches/` | PCSX2 patches for testing hypotheses |
 
+## MacBook and Windows support
+
+The research tools run natively in Python; they do not need a PS2 emulator. A
+playable native game client does not exist yet. See the [platform setup guide](docs/COMPATIBILITY.md)
+and [native client roadmap](docs/NATIVE_PORT.md) for the distinction and next milestones.
+
+Run `python3 tools/doctor.py` on macOS or `py -3 tools/doctor.py` in Windows PowerShell
+for a read-only setup check. Basic checks work without any game files. The optional
+`--game SLUS_209.73` checks your executable's identity; `--strict-re` additionally
+requires the configured reverse-engineering dependencies.
+
 ## Getting started
 
 You need Python 3, an `llvm-objdump` build with MIPS target support, and [Ghidra](https://ghidra-sre.org/) with the
 [ghidra-emotionengine-reloaded](https://github.com/chaoticgd/ghidra-emotionengine-reloaded)
 extension. On macOS, the Apple Command Line Tools build tested here cannot disassemble
 this MIPS executable; the Homebrew `llvm@20` build can. Put its `bin` directory on your
-`PATH` before running the commands below. Check `llvm-objdump --version` for a MIPS target.
+`PATH` or pass `--objdump` to the generator; common Homebrew locations are also detected.
+The following Ghidra commands use macOS/Linux shell syntax.
 
 ```bash
 # 1. Copy SLUS_209.73 from your own disc into the repository root. It is git-ignored.
-shasum -a 256 SLUS_209.73
+python3 tools/doctor.py --game SLUS_209.73
 # expect 292f6f48e3609c0026def2307d76c222cd5b389303d53b89b0e107d7b1dcd675
 
 # 2. Disassembly used by the Python tools
-mkdir -p disasm
-llvm-objdump -d --disassemble-zeroes -j .text --no-show-raw-insn --mcpu=mips3 SLUS_209.73 > disasm/text.asm
+python3 tools/gen_disasm.py SLUS_209.73
 
 # 3. Ghidra project with the symbol map applied, and one decompiled file per function
 mkdir -p build ghidra/proj
@@ -73,8 +84,9 @@ analyzeHeadless ghidra/proj crta -process SLUS_209.73 -noanalysis -scriptPath gh
     -postScript ListFuncs.java "$PWD/ghidra_funcs.tsv"
 ```
 
-The `--disassemble-zeroes` flag preserves zero-valued instructions, including MIPS
-delay-slot no-ops; omitting it can leave gaps in the Python tools' input.
+The Python generator selects a MIPS-capable LLVM installation, preserves zero-valued
+instructions, and writes output without shell encoding conversion. The equivalent
+Windows commands and Ghidra setup are in [COMPATIBILITY.md](docs/COMPATIBILITY.md).
 
 Then, for example:
 

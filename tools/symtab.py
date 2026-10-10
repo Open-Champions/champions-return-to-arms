@@ -11,6 +11,8 @@ Lines starting with # are comments. Later files do not override earlier ones; a 
   python3 tools/symtab.py merge OUT.tsv    # write one combined file (for ApplyNames.java)
 """
 import glob, os, re, sys, tempfile
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from textinput import text_lines
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -24,17 +26,16 @@ def files(root=ROOT):
 def rows(root=ROOT):
     """Yield (addr, name, note, file, lineno) for every well-formed line."""
     for f in files(root):
-        with open(f, encoding='utf-8', errors='replace') as source:
-            for n, l in enumerate(source, 1):
-                l = l.rstrip('\n')
-                if not l.strip() or l.startswith('#'):
-                    continue
-                p = l.split('\t')
-                if (len(p) not in (2, 3) or not re.fullmatch(r'[0-9a-fA-F]{1,8}', p[0])
-                        or not p[1].strip() or '\ufffd' in l):
-                    yield None, l, '', f, n
-                    continue
-                yield int(p[0], 16), p[1].strip(), (p[2] if len(p) > 2 else ''), f, n
+        for n, l in enumerate(text_lines(f, errors='replace'), 1):
+            l = l.rstrip('\n')
+            if not l.strip() or l.startswith('#'):
+                continue
+            p = l.split('\t')
+            if (len(p) not in (2, 3) or not re.fullmatch(r'[0-9a-fA-F]{1,8}', p[0])
+                    or not p[1].strip() or '\ufffd' in l):
+                yield None, l, '', f, n
+                continue
+            yield int(p[0], 16), p[1].strip(), (p[2] if len(p) > 2 else ''), f, n
 
 
 def load(root=ROOT):
