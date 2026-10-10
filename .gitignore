@@ -20,3 +20,6 @@ __pycache__/
 *.pickle
 *.pyc
 .DS_Store
+
+# Community automation and contributor templates only.
+!/.github/

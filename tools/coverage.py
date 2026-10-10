@@ -10,7 +10,7 @@ import symtab
 ROOT = symtab.ROOT
 # (start, end, id, what is in it)  -- ranges are approximate; refine them as areas get mapped
 AREAS = [
-    (0x100000, 0x109d68, 'startup',   'program start, early engine setup'),
+    (0x100000, 0x109d68, 'startup',   'picture cache, items, creature helpers'),
     (0x109d68, 0x131d88, 'creatures', 'Creature base class, AI helpers, per-class clone functions'),
     (0x131d88, 0x13ecf8, 'netcode',   'lockstep loop, prediction, input codec, peers, game messages'),
     (0x13ecf8, 0x147300, 'script',    'level-script VM and its 191 built-in commands'),

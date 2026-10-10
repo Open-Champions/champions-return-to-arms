@@ -1,3 +1,7 @@
+<p align="center"><img src="https://raw.githubusercontent.com/Open-Champions/.github/main/profile/assets/champions-return-to-arms-logo.png" alt="Champions: Return to Arms" width="512"></p>
+
+Part of [Open Champions](https://github.com/Open-Champions), an independent community preservation project.
+
 # Champions: Return to Arms — reverse engineering
 
 An open effort to understand, document and eventually rebuild the code of *Champions:
@@ -14,8 +18,10 @@ disc to use it. See [What may not be committed](CONTRIBUTING.md#what-may-not-be-
 
 ## Where it stands
 
-- The executable is 3.0 MB of MIPS code in 7,732 functions. About 6% of it is named so far;
+- The executable is 3.0 MB of MIPS code in 7,732 functions. Naming coverage is tracked separately;
   [docs/STATUS.md](docs/STATUS.md) breaks that down by area.
+- The local Ghidra pass produced 7,731 successful decompilations; one function at
+  `001a3580` still fails with a normalization error. Indexed does not mean fully understood.
 - All 403 C++ class names are recovered and 399 are tied to their virtual tables.
 - The level-script language is fully decoded: all 120 level scripts decompile to readable
   pseudo-code, and all 191 built-in script commands are located.
@@ -60,7 +66,8 @@ python3 tools/symtab.py merge build/all_names.tsv
 analyzeHeadless ghidra/proj crta -import SLUS_209.73 -processor r5900:LE:32:default
 analyzeHeadless ghidra/proj crta -process SLUS_209.73 -noanalysis -scriptPath ghidra/scripts \
     -postScript ApplyNames.java "$PWD/build/all_names.tsv" \
-    -postScript DecompAll.java "$PWD/decomp/all" "$PWD/ghidra/scripts/extra_entries.txt"
+    -postScript DecompAll.java "$PWD/decomp/all" "$PWD/ghidra/scripts/extra_entries.txt" \
+    -postScript ListFuncs.java "$PWD/ghidra_funcs.tsv"
 ```
 
 Then, for example:
@@ -96,4 +103,5 @@ just as welcome as naming functions.
 *Champions: Return to Arms* belongs to its rights holders. This project is not affiliated
 with them. It documents the behaviour of software its contributors own copies of, for
 interoperability and preservation, and distributes none of it. The tools and notes here are
-under the [MIT license](LICENSE).
+under the [MIT license](LICENSE). The displayed game wordmark is excluded from that
+license; see [artwork credits](https://github.com/Open-Champions/.github/blob/main/ARTWORK.md).
