@@ -3,10 +3,10 @@
   "scope": "recorded-byte-exact-cpp-functions",
   "target": "SLUS-20973-v2.00",
   "baseline_sha256": "292f6f48e3609c0026def2307d76c222cd5b389303d53b89b0e107d7b1dcd675",
-  "ledger_sha256": "9a4e0ba0a702b5c70658b492bb16294bc1381f7afd9d3da620dcf0bca8986419",
+  "ledger_sha256": "a8ec6850000caff046950d023c873e09ae9fd4894b3fac22aa945969cb5e49db",
   "function_index_sha256": "4c597317e64e41bc48752b4b69dbadf6d7eb592004c94bed22842bc0e63d0ac3",
   "verifier_sha256": "5927f1f25785fdd5c53c6d784d870484e41c5fbf2fc21ddf412a69edc826d644",
-  "recorded_at": "2026-10-10T07:23:43.505827+00:00",
+  "recorded_at": "2026-10-10T07:24:51.019218+00:00",
   "compiler": {
     "name": "clang-20",
     "sha256": "01ac721d7f35bb9a1c74b4a17c6253fd645e1602a7322a47003eec1de00a8bd0",
@@ -58,6 +58,29 @@
       "size": 8,
       "original_sha256": "f87c9b13974dbdfb68d490d8ee42dbd225aecaf011bca48345ec80fbb01a62a1",
       "rebuilt_sha256": "f87c9b13974dbdfb68d490d8ee42dbd225aecaf011bca48345ec80fbb01a62a1"
+    },
+    {
+      "id": "function_00207438",
+      "source_sha256": "0bc71bd1765fb8f87604db5e4068f139939856bff57434cfb6bae69aead2c80a",
+      "compiler_args": [
+        "--no-default-config",
+        "--target=mipsel-none-elf",
+        "-march=mips3",
+        "-mabi=32",
+        "-O2",
+        "-ffreestanding",
+        "-fno-pic",
+        "-mno-abicalls",
+        "-fno-stack-protector",
+        "-fno-exceptions",
+        "-fno-rtti",
+        "-fomit-frame-pointer"
+      ],
+      "status": "matched",
+      "object_sha256": "9e1ed79d88ab04d8a4743a4979753a137fdf299db9f6ffe5b6462d711b9dfb6a",
+      "size": 8,
+      "original_sha256": "e53c4e75d8ebd8824399eea0f66105488973fbec7011893bf821a447e49604ef",
+      "rebuilt_sha256": "e53c4e75d8ebd8824399eea0f66105488973fbec7011893bf821a447e49604ef"
     }
   ]
 }
