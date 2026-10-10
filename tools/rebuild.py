@@ -130,6 +130,7 @@ def source_code(text):
     token so a following # cannot incorrectly become a directive at line start.
     Raw strings are explicitly outside this initial supported source subset.
     """
+    require('\0' not in text, 'NUL bytes are outside the self-contained source scope')
     require('??' not in text, 'trigraph syntax is outside the initial self-contained scope')
     text = text.replace('\r\n', '\n').replace('\r', '\n')
     # Clang also accepts whitespace between a splice's backslash and newline.

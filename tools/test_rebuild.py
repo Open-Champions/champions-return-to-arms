@@ -243,6 +243,13 @@ class RebuildTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             rebuild.source_bytes(self.source)
 
+    def test_nul_cannot_hide_a_directive_from_the_source_gate(self):
+        # Clang treats NUL as whitespace, including before a directive marker.
+        for prefix in ('\0', ' \0', '\t\0'):
+            self.source.write_bytes((prefix + '#include "value.hpp"\n').encode())
+            with self.subTest(prefix=prefix), self.assertRaisesRegex(ValueError, 'NUL'):
+                rebuild.source_bytes(self.source)
+
     def test_raw_and_unterminated_literals_are_explicitly_rejected(self):
         for prefix in ('', 'u8', 'u', 'U', 'L'):
             self.source.write_text('auto s = ' + prefix + 'R"tag(/*)tag";', encoding='utf-8')
