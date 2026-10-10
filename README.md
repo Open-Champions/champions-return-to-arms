@@ -31,6 +31,7 @@ disc to use it. See [What may not be committed](CONTRIBUTING.md#what-may-not-be-
   confirmed on a running game yet** — that needs two emulators side by side, and it is the
   most useful thing a new contributor could do. [FINDINGS.md](FINDINGS.md) is the evidence
   ledger; every claim there is marked observed, inferred or unknown, with addresses.
+  Use the [two-client test procedure](docs/VALIDATION.md) to record reproducible results.
 
 ## What is here
 

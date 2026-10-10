@@ -62,6 +62,10 @@ PCSX2, you can settle questions that reading cannot. Patches go in `patches/` as
 whether you tested it. Report results in an issue with what you did, on which frame or
 scene, and what each screen showed.
 
+Use the [two-client validation protocol](docs/VALIDATION.md) to compare a repeatable
+baseline with one patch at a time. A run without a reproduced baseline is inconclusive
+about whether a fix works.
+
 ## Working together
 
 - Open an issue before starting a big area so two people do not map the same code.

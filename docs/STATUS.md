@@ -6,7 +6,7 @@ understood: see the area document in `docs/` for what has actually been read.
 
 | Area | Address range | Functions | Named | Named, by code size | Contents |
 |---|---|---|---|---|---|
-| startup | 100000–109d68 | 53 | 0 | 0% | program start, early engine setup |
+| startup | 100000–109d68 | 53 | 0 | 0% | picture cache, items, creature helpers |
 | creatures | 109d68–131d88 | 320 | 10 | 8% | Creature base class, AI helpers, per-class clone functions |
 | netcode | 131d88–13ecf8 | 54 | 13 | 45% | lockstep loop, prediction, input codec, peers, game messages |
 | script | 13ecf8–147300 | 195 | 182 | 92% | level-script VM and its 191 built-in commands |

@@ -16,5 +16,7 @@ jobs:
         run: python3 -m unittest discover -s tools -p 'test_*.py'
       - name: Validate symbol contributions
         run: python3 tools/symtab.py check
-      - name: Calculate naming coverage
-        run: python3 tools/coverage.py
+      - name: Verify published coverage is current
+        run: |
+          python3 tools/coverage.py --write
+          git diff --exit-code -- docs/STATUS.md

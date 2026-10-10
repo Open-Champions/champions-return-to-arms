@@ -67,7 +67,7 @@ is-player flag at 0x2e18a4, decompile lines for caster+0x3c8).
 ## Tools added for this
 
 Ghidra 12.1.4 with ghidra-emotionengine-reloaded 2.1.38 (project in ghidra/proj, decompiles in
-decomp/). ghidra_funcs.tsv is Ghidra's function table (7,388 functions). tools/fieldxref.py
+decomp/). ghidra_funcs.tsv is Ghidra's function table (7,732 indexed functions; 7,731 successful local decompilations, with `001a3580` still failing). tools/fieldxref.py
 lists loads and stores at a struct offset; tools/flagxref.py finds tests of a flag bit;
 tools/gxref.py lists reads and writes of a global; tools/ghostreach.py walks direct calls
 from a function and lists the globals each reachable function writes, marking the ones that

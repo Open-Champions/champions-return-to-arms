@@ -23,3 +23,11 @@ __pycache__/
 
 # Community automation and contributor templates only.
 !/.github/
+/.github/*
+!/.github/workflows/
+!/.github/ISSUE_TEMPLATE/
+/.github/workflows/*
+!/.github/workflows/tools.yml
+/.github/ISSUE_TEMPLATE/*
+!/.github/ISSUE_TEMPLATE/research.md
+!/.github/ISSUE_TEMPLATE/runtime-bug.md
