@@ -8,7 +8,7 @@ understood: see the area document in `docs/` for what has actually been read.
 |---|---|---|---|---|---|
 | startup | 100000–109d68 | 53 | 53 | 100% | picture cache, items, creature helpers |
 | creatures | 109d68–131d88 | 320 | 295 | 97% | Creature base class, AI helpers, per-class clone functions |
-| netcode | 131d88–13ecf8 | 54 | 13 | 45% | lockstep loop, prediction, input codec, peers, game messages |
+| netcode | 131d88–13ecf8 | 54 | 54 | 100% | lockstep loop, prediction, input codec, peers, game messages |
 | script | 13ecf8–147300 | 195 | 182 | 92% | level-script VM and its 191 built-in commands |
 | objects | 147300–160000 | 219 | 183 | 89% | GameObject, world grid and lists, memory pool, props |
 | engine | 160000–1a0000 | 546 | 268 | 47% | math, animation, lump files, pads, model drawing, text, terrain, pathfinding, camera, dialog, particles, cutscenes, tasks |
@@ -16,9 +16,9 @@ understood: see the area document in `docs/` for what has actually been read.
 | ui | 1c0000–1e8000 | 222 | 187 | 90% | inventory and menus, HUD, shop, game state |
 | gameplay | 1e8000–210000 | 276 | 240 | 88% | damage, triggers, effects, world camera, vehicles |
 | audio-save | 210000–232000 | 293 | 172 | 76% | sound, save and load, mission menu, store |
-| monsters | 232000–2c3cd4 | 885 | 5 | 2% | monster classes and level objects (chests, traps, gates, savepoints) |
+| monsters | 232000–2c3cd4 | 885 | 734 | 91% | monster classes and level objects (chests, traps, gates, savepoints) |
 | skills | 2c3cd4–320000 | 982 | 865 | 89% | Skill and Spell classes |
 | mainloop | 320000–323dcc | 39 | 2 | 4% | task scheduler and main loop |
 | netlib | 323dcc–3b0000 | 2066 | 385 | 32% | lobby client, SOE UdpLibrary, AES, Sony SDK libraries |
 | runtime | 3b0000–3e6000 | 1460 | 0 | 0% | C and C++ runtime, type info, static constructors |
-| **all** | | 7732 | 2959 | 50% | |
+| **all** | | 7732 | 3729 | 69% | |

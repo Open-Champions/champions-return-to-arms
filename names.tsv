@@ -192,12 +192,12 @@
 00139e88	net_frameLoop	lockstep main loop: runs sim tick, builds per-frame sync hash, compares with peers
 0013ae60	net_frameLoop_hashBlock	inside net_frameLoop: hash = g_syncAcc + g_randSeed + sum((int)pos.xyz of each player)
 0013b048	net_frameLoop_compare	inside net_frameLoop: peer ring[frame&0xff] vs local -> sets peer+0x44d7, prints "out of SYNC"
-0013b5d0	net_frameLoop2	second site printing "Player %d is out of SYNC"
+0013b5d0	net_receivePackets	packet receiver (not a loop); also compares an arriving sync record and can print the out-of-sync line. Was named net_frameLoop2
 0013db38	net_sendGameMsg	(conn, buf, len) - used for msg types 0x01,0x09,0x0a,0x0b,0x0c
 0013de68	net_disconnectPlayer	(player, whackHim) "NET: DISCONNECTING PLAYER %d on frame %d"
 0013e1f0	net_getLocalPlayerSlot	(n) -> slot index of n-th local player
 0013e618	net_peerIsOutOfSync	(p) -> peer[p]+0x44d7
-00134c60	net_launchTransfer	SHAKE/SIZE/DATA handshake, allocs 0x8000 "Net Launch buff"
+00134c60	net_launchPrepare	prepares the launch buffer (0x8000 bytes); the SHAKE/SIZE/DATA exchange itself is in 0x135638. Was named net_launchTransfer
 001bdc98	player_checksum	(slot, PlayerData*) anti-tamper checksum of selected character fields
 001bf8d8	game_getEvil	player[0]+0x4c1a bit g_difficultyIdx
 001bf8f8	game_setEvil	sets/clears that bit on every player
@@ -217,9 +217,9 @@
 # ---- netcode: globals ----
 00402791	g_networkMode	s8, nonzero in a net game
 004027ac	g_netFrame	s32 lockstep frame counter
-004027c0	g_syncAcc	s32, added into the per-frame sync hash; zeroed in net_gameInit
+004027c0	g_syncAcc	s32 added into the per-frame sync hash; only ever zeroed (net_gameInit), so always 0
 004027c4	g_numPeers	s32
-004027d4	g_netAckFrame	s32, net_frameLoop stalls when g_netFrame - this >= 31
+004027d4	g_ghostRebaseFrame	frame of the last prediction-copy rebase; the copy is re-made when g_netFrame - this > 30. The tick does not stall on it. Was named g_netAckFrame
 00404464	g_randSeed	u32 LCG state: s = s*1664525 + 1013904223; ~194 inlined use sites
 004d8ae0	g_numPlayers	s32
 004d8af0	g_players	PlayerData[4], stride 0x4c30; +0x43d8 = GameObject* (pos floats at +0x10/+0x14/+0x18); +0x4c1a evil bits; +0x4c1b madeDecision bits
@@ -229,7 +229,7 @@
 005c10e4	g_localSyncRing	256 x 12 bytes {frame, time, hash}, index = frame & 0xff
 0086ab38	g_expectedChecksums	int[4][2]
 0086ab58	g_receivedChecksums	int[4][2]
-0086ac40	g_netGameConn
+0086ac40	g_msgIdGame	game-message id 3 (the first argument of net_sendGameMsg is a message id, not a connection). Was named g_netGameConn
 # ---- script VM (threaded code; opcode semantics are in tools/scr.py) ----
 0013e6d0	scr_relocate	loader: swaps opcodes for handler addresses (table 0x403150), relocates code operands
 0013ecf8	scr_interpret	computed-goto interpreter; called with NULL returns the handler table
@@ -267,7 +267,7 @@
 0014fdb8	pool_new	pooled allocator, zero-fills the block
 00184798	path_service	time-sliced pathfinding queue (128 entries at 0x7d43a8); 1 request per call
 # ---- main loop / tasks ----
-0032316c	main_loop	net games tick only through net_main; draw tasks run every rendered frame
+0032316c	main_loop	per-frame loop inside the session function 0x322998 (not a function entry); net games tick only through net_main; draw tasks run every rendered frame
 00132e90	net_main	calls net_frameLoop
 003226e4	tasks_run	run-phase tasks once per simulated frame
 0019e4a0	task_add	(fn, priority, name, isDraw)
@@ -276,7 +276,7 @@
 00271c70	Horsemen_ctor	class behind objects UndeadKnight1-4 (variant 0-3, no mount) and Rider* (mounted, BLOMEDAL only)
 0027236c	Horsemen_run	variants cast player skills: 0 DiseaseBolt, 1 FireStorm, 2 TagarsInsects, 3 SummonSkeleton
 00270968	Nightmare_ctor	the mount; not created for UndeadKnight1-4
-0024a670	Cazic_ctor	object cazicavatar; casts FireStorm and SummonSkeleton
+0024a670	Cazic_ctor	class Cazic; run is 0x24aaf0. Variants cazicavatar (melee, ground pound, charge only) and cazicthule (casts); see docs/monsters.md
 001453e4	script_reapEnemies	script built-in: deletes (not kills) every object with flags&0x28==0x28 and !0x40; its three typeid tests compare against pointer types and can never match
 0041b170	g_skillTable	pointers to the static Skill objects (index 4 DiseaseBolt, 7 FireStorm, 11 SummonSkeleton, 87 TagarsInsects)
 # ---- activity, camera and cutscene audio sync (added after the second static pass) ----
