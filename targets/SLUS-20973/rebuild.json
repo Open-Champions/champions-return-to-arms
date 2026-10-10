@@ -125,6 +125,29 @@
         "-fomit-frame-pointer"
       ],
       "evidence": "Observed complete body 0x00207310-0x00207317: writes the low 16 bits of the second argument to byte offset 0x6a of the first argument and returns, with no calls or other memory accesses. Previous body ends at 0x0020730f; next body starts at 0x00207318. Direct caller 0x002072a8 passes a signed halfword from offset 0x164 of the same storage; caller 0x002033ac passes a signed halfword loaded from a separate indexed structure. Original type and field semantics remain unknown; authored ABI contract requires aligned writable 16-bit storage at offset 0x6a."
+    },
+    {
+      "id": "function_00208b94",
+      "address": "0x00208b94",
+      "size": 8,
+      "source": "reconstructed/function_00208b94.cpp",
+      "symbol": "champions_rebuild_00208b94",
+      "language": "c++",
+      "compiler_args": [
+        "--no-default-config",
+        "--target=mipsel-none-elf",
+        "-march=mips3",
+        "-mabi=32",
+        "-O2",
+        "-ffreestanding",
+        "-fno-pic",
+        "-mno-abicalls",
+        "-fno-stack-protector",
+        "-fno-exceptions",
+        "-fno-rtti",
+        "-fomit-frame-pointer"
+      ],
+      "evidence": "Observed complete body 0x00208b94-0x00208b9b: writes the low 32 bits of the second argument to byte offset 0x400 of the first argument and returns, with no calls or other memory accesses. Previous body ends at 0x00208b93; next body starts at 0x00208b9c. Caller 0x00142f24 supplies a word loaded at 0x00142f28 after checking its destination is nonzero. Caller 0x00209450 supplies constant 1. Original type, signedness and field semantics remain unknown; authored ABI contract requires aligned writable 32-bit storage at offset 0x400."
     }
   ]
 }
