@@ -12,13 +12,13 @@ understood: see the area document in `docs/` for what has actually been read.
 | script | 13ecf8–147300 | 195 | 182 | 92% | level-script VM and its 191 built-in commands |
 | objects | 147300–160000 | 219 | 19 | 9% | GameObject, world grid and lists, memory pool, props |
 | engine | 160000–1a0000 | 546 | 11 | 5% | math, animation, lump files, pads, model drawing, text, terrain, pathfinding, camera, dialog, particles, cutscenes, tasks |
-| player | 1a0000–1c0000 | 122 | 18 | 35% | Player class, player record, inventory items, stats |
+| player | 1a0000–1c0000 | 122 | 109 | 96% | Player class, player record, inventory items, stats |
 | ui | 1c0000–1e8000 | 222 | 10 | 3% | inventory and menus, HUD, shop, game state |
-| gameplay | 1e8000–210000 | 276 | 11 | 1% | damage, triggers, effects, world camera, vehicles |
+| gameplay | 1e8000–210000 | 276 | 240 | 88% | damage, triggers, effects, world camera, vehicles |
 | audio-save | 210000–232000 | 293 | 5 | 2% | sound, save and load, mission menu, store |
 | monsters | 232000–2c3cd4 | 885 | 5 | 2% | monster classes and level objects (chests, traps, gates, savepoints) |
 | skills | 2c3cd4–320000 | 982 | 7 | 3% | Skill and Spell classes |
 | mainloop | 320000–323dcc | 39 | 2 | 4% | task scheduler and main loop |
 | netlib | 323dcc–3b0000 | 2066 | 5 | 1% | lobby client, SOE UdpLibrary, AES, Sony SDK libraries |
 | runtime | 3b0000–3e6000 | 1460 | 0 | 0% | C and C++ runtime, type info, static constructors |
-| **all** | | 7732 | 298 | 6% | |
+| **all** | | 7732 | 618 | 13% | |

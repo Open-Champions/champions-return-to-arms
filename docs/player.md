@@ -1,0 +1,375 @@
+# Player: the Player class and the per-player record
+
+Address range 0x1a0000–0x1c0000 (122 functions). Symbols are in `symbols/player.tsv`.
+Everything here was read from the executable; nothing was run. Each statement is
+**Observed** (read at the address given), **Inferred** or **Unknown**.
+
+## What the area does
+
+Two things live side by side and are easy to confuse:
+
+- The **Player object** — a `Creature` (0x3c8 bytes) extended to 0x590 bytes, created by
+  `Player_ctor` (0x1a1d28), one per player in the level. It holds position, animation and
+  the short-lived state of whatever the player is doing. It is destroyed and re-made on
+  death/respawn and on every level change.
+- The **player record** — 0x4c30 bytes per slot in `g_players` (0x4d8af0). It holds the
+  character: name, class, statistics, hit points and mana, three item bags, equipment
+  pointers, ability records, skill ranks, mission progress. The object finds its record
+  through its slot index (object +0x3c8); the record points back at the object (+0x43d8).
+
+`Player_run` (0x1a5030, virtual slot 4) is the per-frame simulation of one player. It runs
+once per simulated frame for every real player and, on each machine, extra times on the
+prediction copy of that machine's own player (object flag 0x20000). The second half of this
+document is the audit of what the copy can change.
+
+The start of the range (0x1a00b0–0x1a1b38) is not player code: floor decals, a menu list
+widget and the handle-list node pool. The end of the range (0x1bfbc8 on) belongs to the
+inventory user interface.
+
+## The player record (`g_players[slot]`, 0x4c30 bytes)
+
+Offsets are from the start of the record. "init" = `player_initNewCharacter` 0x1b1d70,
+"import" = `player_importCharacter` 0x1bd458, "stats" = `player_recalcStats` 0x1b6458.
+
+| Offset | Type | Meaning | Evidence |
+|---|---|---|---|
+| +0x00 | char[0x20] | character name | Observed: init copies the name argument here (string copy 0x3b868c); import copies 0x20 bytes |
+| +0x20 | s8[4] | appearance choices (-1 = none); select the model part files | Observed: `Player_ctor` builds four part names from them (0x1a1d28) |
+| +0x24 | char[] | name of the level to return to after a recall; default is a 5-byte constant at 0x5375d0 | Observed: init/import copy the constant; `player_recallTick` 0x1b5fa0 stores and reads it |
+| +0x44 | Vec3 | position to return to after a recall | Observed: 0x1b5fa0 |
+| +0x50 | s32 | class index 0–6, derived from the model index: models 0,1→0; 4,5→1; 8,9→2; 2,3→3; 6,7→4; 10→5; 11→6 | Observed: init. Class 0 loses mana while status counter 2 runs; classes 1 and 4 are the ones the script built-in `isClericOrWizard` accepts (0x1465cc) |
+| +0x54 | s32 | character model index 0–11 | Observed: init argument; indexes the model name table 0x4ebbb8 |
+| +0x58 | s8 | a second level-like byte, starts at 1, capped at 50 on import | Observed; exact meaning Unknown (read by menus) |
+| +0x59 | s8 | character level used by the hp/mana formulas | Observed: stats |
+| +0x5c | s32 | experience; import clamps it to the limit at 0x41b620 | Observed: import |
+| +0x78 | s32[4] | base statistics. Index 0 feeds the load limit, 1 max mana, 3 max hp, so they are strength, intelligence, dexterity, stamina (order Inferred from those uses) | Observed: init fills from class table 0x4ef400 or from four bytes; stats reads them |
+| +0x90 | s32[4] | effective statistics = base + item modifiers 7, 8, 9, 10 | Observed: stats |
+| +0xa8, +0xe3, +0x4c29 | u8 | marker bytes set to 0xaa by init | Observed; purpose Unknown (integrity marker Inferred) |
+| +0xac | float | hit points | Known (G3); Observed throughout |
+| +0xb0 | float | maximum hit points = level × a + stamina × b − c, constants per class | Observed: stats |
+| +0xb4 | float | healing still to be delivered by a potion; +0xb8 is the amount per frame | Observed: `Player_regenHealth` 0x1b3b90 |
+| +0xbc | float | mana per frame delivered by a potion | Observed: `Player_regenMana` 0x1b3900 |
+| +0xc0 | float | mana | Known (G3) |
+| +0xc4 | float | maximum mana = (intelligence − a) × b + level × c, constants per class | Observed: stats |
+| +0xc8 | float | mana still to be delivered by a potion | Observed: 0x1b3900 |
+| +0xcc | s32 | damage type passed to the damage function (init 0xb) | Observed: `Player_meleeHit` 0x1b6a98 |
+| +0xd0, +0xd4 | s32 | weapon damage minimum and maximum, rebuilt by `Player_recalcDamage` | Observed: 0x1b6a98 |
+| +0xdc | float | sum of item modifier 0x1e × 0.01; lowers the chance of being staggered | Observed: stats; `Player_processDamage` |
+| +0xe4 | s32 | gold (init 500) | Observed: init; script gold built-ins |
+| +0xec–0xee | s8 | counters read by the level-up menus (init 0, 0, 1) | Observed; meaning Unknown |
+| +0xef | s8[0x30] | levels of the 48 class passives, parallel to the class skill table | Observed: `player_getPassiveLevel` 0x1bed48 |
+| +0x120 | float | carried load (sum of item weights) | Observed: `player_recalcLoad` 0x1bec10 |
+| +0x124 | float | load limit = strength + 125 + 15 × passive 0x40, capped at 9999 | Observed: stats |
+| +0x128 | u64 | cleared by script `clearAllSkills` with the passive levels | Observed 0x1458e0; meaning Unknown |
+| +0x130 | item[64] | bag 0, 0x48 bytes per item; count at +0x1330 | Observed: 0x1bec10, import |
+| +0x1338 | item[64] | bag 1; count at +0x2538 | Observed: same loops (stride 0x1208) |
+| +0x2540 | item[64] | bag 2 (potions are counted here); count at +0x3740 | Observed: `player_countPotions` 0x1ba5f8 |
+| +0x3748 | 0xa88 bytes | block copied whole on import; same size as one class skill table | Observed size; contents Unknown |
+| +0x41d0 | 0x204 bytes | zeroed on import | Observed; Unknown |
+| +0x43d0 | s32 | read by prediction and menus | Unknown |
+| +0x43d4 | s32 | init −1 | Unknown |
+| +0x43d8 | ptr | the Player object (the prediction copy while predicting) | Known (G3) |
+| +0x43f0 | item*[17] | equipped items by equipment slot (item definition +0x1c). Slot 0 one-hand weapon, 2 two-hand or ranged weapon, 3 shield, 5 and 6 rings, 8 ammunition (+0x4410), 14 and 15 earrings | Observed: `inventory_equipItem` 0x1c27c0; the 17-entry loops in stats and the regen functions |
+| +0x4434 | item*[2] | primary weapon of weapon set 0 and set 1 | Observed: 0x1c27c0, `Player_weaponSwapInput` 0x1bb718 |
+| +0x443c | item* | second weapon when dual wielding | Observed: 0x1b6a98 |
+| +0x4440 | ability[15] | ability records, 0x68 bytes each (layout below) | Observed: init loop of 15; import copies 0x618 bytes |
+| +0x4a5c | float | grows while standing in state 2, shrinks while blocking; no other reader | Known (G8) |
+| +0x4a60 | s16 | which ability button was pressed last (0 or 1) | Observed: `Player_run` 0x1a5a88 |
+| +0x4a64 | s32 | −1 / +1 request from two buttons | Observed: `Player_pollAbilityCycle` 0x1bf0a8; reader 0x1de8c4 (UI) |
+| +0x4a7c | s8 | active weapon set (0 or 1) | Observed: 0x1bb718, 0x1c27c0 |
+| +0x4a7d | s8 | weapon swap pending | Observed: 0x1bb718 |
+| +0x4a80 | u32 | pad mask of the ability button in use | Observed: 0x1a5a44–0x1a5aa8 |
+| +0x4a84, +0x4a85 | s8 | index of the ability record bound to button A and to button B | Observed: instant-ability check after 0x1a5c64, states 1, 2, 5 |
+| +0x4a86 | s8 | weapon animation class in use: 0 one-hand, 1 and 2 two-hand kinds, 3 long weapon, 4 bow, 5 unarmed, 6 thrown, 7 dual wield | Observed: copied from item definition +0x1e on equip; selects the attack animation name and combo table in state 1 |
+| +0x4a88, +0x4ac8 | 0x40 bytes each | weapon trail state for the main and second weapon; +0x3d hit material, +0x3e a 5-frame timer | Observed: `Player_weaponTrails` 0x1bc768; 0x1b6a98 tail |
+| +0x4b08 | {s16 id, s16 rank}[48] | skill ranks, terminated by id −1 | Observed: `player_getSkillRank` 0x1bf330 / `player_setSkillRank` 0x1bf3a0 |
+| +0x4bc8 | s8 | countdown; at 0 clears object flag 0x400000 | Observed: `Player_run` tail 0x1ac6f8 |
+| +0x4bc9 | s8 | countdown; while non-zero no ability can start | Observed: state 2, 0x1ac74c |
+| +0x4bca | s16 | level-change cooldown | Known (D20); decremented at 0x1ac6e8 |
+| +0x4bbf + d×13 + m | u8 | mission flags for difficulty d (1–5) and mission m (0–12): bit 0 available, bit 1 complete | Observed: 0x1bf698–0x1bf770 |
+| +0x4c0d | s8[13] | medal earned per mission | Observed: 0x1bf7e8, 0x1bf838, 0x1bdb80 |
+| +0x4c18 | u64 | bit field; bits 32–36 difficulty index, +0x4c1a evil bits, +0x4c1b decision bits | Observed: init; names.tsv |
+| +0x4c20 | float | movement speed multiplier, 1.0 | Observed: `player_speedScale` 0x1bea10 |
+| +0x4c24 | s8 | team (PvP) | Observed: `Player_isEnemy` 0x1b5ea8; Player vslot 37 |
+| +0x4c26 | s8 | second earring slot unlocked | Observed: 0x1c27c0; script `piercePlayerEar` |
+| +0x4c27 | s8 | hit immunity countdown (net games; 60 after a cutscene) | Observed: 0x1bfaf8, 0x1b5438, 0x1a5368 |
+| +0x4c28 | u8 | eight script flags | Observed: `player_setFlag` 0x1be398 / `player_getFlag` 0x1bfb80 |
+
+The whole record is sent to the other machines at launch: `player_packRecord` 0x1be0d0
+compresses runs of zero bytes and `player_unpackRecord` 0x1bfa38 expands them (callers
+`net_launchTransfer` 0x134c60 and 0x135638). **Observed.** So every machine holds the same
+four records, but the four records differ from each other.
+
+### Item record (0x48 bytes)
+
+| Offset | Type | Meaning | Evidence |
+|---|---|---|---|
+| +0x00 | ptr | item definition (+0x1c equipment slot, +0x1d hand class, +0x1e weapon animation class) | Observed: 0x1c27c0 |
+| +0x04 | s16 | quantity (arrows, thrown weapons, potions) | Observed: `Player_run` 0x1a8890 and later |
+| +0x08 | u64 | flags (bit 24 thrown weapon, bits 42–44 arrow kinds, bit 39 see `player_removeFlag39Items`) | Observed: state 0 |
+| +0x24 | {s16 id, s16 value, s16 ?, s16 frames}[4] | modifiers. Ids seen: 7–10 statistics, 0xb hp regeneration %, 0xc mana regeneration %, 0x14 attack speed (4.5% each), 0x1e stagger resistance; the ids listed at 0x537c08 are timed | Observed: stats, 0x1b3b90, 0x1b3900, `Player_tickEnchantTimers` 0x1bc560 |
+
+### Ability record (0x68 bytes)
+
+| Offset | Type | Meaning | Evidence |
+|---|---|---|---|
+| +0x00 | char[] | name; one fixed name marks an ability implemented by a `Skill` object in `g_skillTable`, any other name takes the older inline code paths | Observed: string compare with 0x535e30 before every use |
+| +0x20 | s16 | skill id (−1 empty) | Observed |
+| +0x22 | s16 | cooldown in frames, copied to object +0x4ae | Observed |
+| +0x24 | u8 | non-zero: the ability may be started from state 2 | Observed |
+| +0x25 | u8 | kind: 0 one cast, 1 held (mana per frame), 2 timed, 7 instant (no animation), 8 toggle | Observed: state 2 and state 5 |
+| +0x28 | s16 | effect strength (older code) | Observed: argument of the call at 0x1ac400 |
+| +0x2c | float | mana cost (older code); 999 means "needs full mana" | Observed |
+| +0x30, +0x38, +0x40 | s16[3], s16[4], float | aura colours and fade rate | Observed: state 5 |
+
+## The Player object beyond the Creature part
+
+| Offset | Type | Meaning | Evidence |
+|---|---|---|---|
+| +0x3c8 | s32 | slot index | Known |
+| +0x3cc | u8 | set when the shot of state 0 has been released | Observed |
+| +0x448 | s32 | frame number at which the current action started | Observed: every state |
+| +0x44c | s32 | attack request: 0 none, 1 another swing queued, 2 heavy attack | Observed: states 1, 2 |
+| +0x450 | s32 | "repeat the ability" latch | Observed |
+| +0x454 | s32 | block requested this frame | Observed: 0x1a5e2c |
+| +0x458, +0x45c | s32 | frame stamps of the attack chain | Observed: state 1 |
+| +0x460, +0x461 | s8 | combo step; attack animation variant | Observed: state 1, 0x1bba88 |
+| +0x462 | u8 | display-only player (menu model); not registered in `g_players` | Observed: ctor |
+| +0x463 | u8 | fidget animation running | Observed: 0x1bc2f8 |
+| +0x464 | u8 | written by `Player_draw`: 0 drawn, 1 not drawn | Observed: 0x1a48c4 / 0x1a48c8 |
+| +0x468, +0x46c | float | last speed; walk/run blend | Observed: `Player_move` |
+| +0x470 | float | length of the current attack in seconds | Observed |
+| +0x474 | s8[4] | bonuses derived from the four effective statistics (+0x475 mana regeneration, +0x477 hp regeneration) | Observed: stats, regen functions |
+| +0x47b | u8 | cast phase 0/1/2 | Observed: state 5 |
+| +0x47c–0x47e | u8 | flags of state 7 | Observed |
+| +0x47f | u8 | blocking | Observed: state 8 |
+| +0x480 | u8 | kind of ranged shot: 0 plain, 1/2/3/5/6 special arrows, 7 throw | Observed: states 0, 2 |
+| +0x481 | u8 | frames during which the stick is ignored | Observed: 0x1b4020 top |
+| +0x482 | u8 | set to 15 while on the ground, counts down otherwise | Observed: 0x1b4020 |
+| +0x484 | ptr | ability record of a running toggle ability | Observed |
+| +0x488 | ptr | ability record forced from outside; cleared each frame unless casting | Observed |
+| +0x48c | float | minimum time between attacks | Observed |
+| +0x4a8 | s32 | handle of a looping sound, −1 none | Observed |
+| +0x4ae | s16 | ability cooldown | Observed |
+| +0x4b0, +0x4b2 | s16 | idle frames; threshold for the idle voice line | Observed: 0x1a5450 block |
+| +0x4b4 | s16 | spawn protection countdown (60, or 90 in a net game) | Observed: 0x1b8f28 |
+| +0x4b8 | handle list | targets of a sweeping attack | Observed |
+| +0x4bc, +0x4c0 | float | last movement velocity | Observed |
+| +0x4c8, +0x504 | light | two light objects; +0x504 is the coloured aura light | Observed: ctor, run tail |
+| +0x540 | ptr | vehicle being ridden | Observed: state 0xd |
+| +0x544–0x558 | handles | body model and appearance parts | Observed: ctor |
+| +0x55c | s32 | net games: a melee hit lands only while this is 0; set to 16 while blocking | Observed: 0x1aa6ec–0x1aa738 |
+| +0x588 | handle | the held (channelled) spell | Known (G2) |
+| +0x58c | s32 | action state | below |
+
+### Virtual slots of Player (table 0x511308)
+
+Slots not listed are inherited from Creature.
+
+| Slot | Function | Meaning | Evidence |
+|---|---|---|---|
+| 1 | 0x1a1bb8 | destructor | Known |
+| 2 | 0x1b5330 `Player_takeDamage` | queue damage | Observed |
+| 4 | 0x1a5030 `Player_run` | | Known |
+| 5 | 0x1a46c0 `Player_draw` | | Known |
+| 6 | 0x1beaf0 `Player_onTouch` | rush skill contact | Observed |
+| 15 | 0x11e870 | clone | Known |
+| 16 | 0x3c3b38 | returns the body model (+0x544) | Observed |
+| 20 | 0x1b5ea8 `Player_isEnemy` | | Observed |
+| 27 | 0x1b5d68 | sets state 0 or 1 with an animation | Observed; purpose Unknown |
+| 29, 30 | 0x3c3b08, 0x3c3b10 | empty | Observed |
+| 37 | 0x3c3b18 | returns the team byte (record +0x4c24) | Observed |
+| 39 | 0x3c3b40 | skill rank for a skill id | Observed |
+
+Slots of other classes that `Player_run` relies on (**Observed** at the call sites):
+creature slot 12 (table +0x60) "you are being aimed at" with kind 2 (ranged) or 3 (melee);
+slot 17 (+0x88) set aim point; slot 26 (+0xd0) turn toward a point. `Skill` (table at
+skill +0x60): slot 1 "can this player use it", slot 2 cast (returns a Spell), slot 5 mana
+cost for a rank. `Spell` (table at spell +0x14): slot 1 with argument 3 ends it.
+
+## The action state machine (+0x58c)
+
+| State | Meaning | Entered from | Left to |
+|---|---|---|---|
+| 0 | ranged attack: bow shot, or throw when +0x480 is 7 | state 2 with a bow or thrown weapon and the attack button (0x1a7b04 on); Player slot 27 | 2 when the animation flag clears and the minimum interval has passed |
+| 1 | melee swing and combo | state 2 (attack button, or heavy attack skill 0x25) | 2 at the end of the swing; 8 if block is held |
+| 2 | neutral: standing or moving; every action starts here | constructor; end of every other state | 0, 1, 5, 8, 10, 0xc |
+| 3 | staggered or knocked down | `Player_processDamage` 0x1b2ed8 and 0x1b380c | 2 when the hit animation ends |
+| 4 | dead | `Player_processDamage` 0x1b34fc | never; the object is replaced by `player_respawn` 0x1bd040 |
+| 5 | casting an ability | state 2 | 2 when released, finished, refused or out of mana |
+| 6 | under control of a skill (leap-type skills supply the velocity) | skill code 0x2d17c8, 0x2de640, 0x2e09b4, 0x2face4, 0x30016c, 0x301714, 0x303254 | the same skills set 2 |
+| 7 | airborne (a jump impulse, then falling) | no direct store of 7 found; Unknown | 2 on landing (`Player_move`) |
+| 8 | blocking | states 1, 2, 0xb when block is held and `player_canBlock` | 2 on release; 0xb |
+| 9 | rush forward (movement mode 2); contact handled by `Player_onTouch` | skill code 0x2c8864 | skill code |
+| 10 | ground-pound style skill; animation events do area damage | state 2 older skill id 0xc; skill code 0x2c71ec | 2 |
+| 0xb | block move: swap button pressed while blocking | `Player_tryBlockMove` 0x1bf150 | 8 or 2 |
+| 0xc | war-cry (older skill id 0xe) | state 2 | 2 |
+| 0xd | riding a vehicle | 0x208f08 | 2 (the copy predicts the dismount button) |
+| 0xe | skill-held state with no handling in `Player_run` | 0x311638 | skill code |
+
+All **Observed** in `Player_run`'s switch at 0x1a5e80 and the stores listed; the short
+English names are mine.
+
+Order of work in `Player_run` each frame: `Creature_run`; mirror hp to object +0x228;
+timers; idle voice; choose the pad (a zeroed pad at 0x8667f0 replaces the real one while
+controls are locked); aura light fade; potion buttons; ability button selection; health and
+mana regeneration and item timers; kill plane; `Player_processDamage`; weapon swap and
+interact; the state switch; aura light; `Player_updateCast`; record countdowns.
+
+Two net-game differences inside the state machine (**Observed**): the melee hit is applied
+on frame 1 of the swing instead of at 16 frames ÷ attack speed (0x1aa6ec–0x1aa738), and the
+ranged release time is halved (0x1a80e0 on). Movement speed is 0.75 instead of 0.861945.
+
+## Functions that matter
+
+| Address | Name | Note |
+|---|---|---|
+| 0x1a1d28 | `Player_ctor` | |
+| 0x1a5030 | `Player_run` | 30 KB |
+| 0x1b4020 | `Player_move` | position changes come from here (through creature move 0x1186d8) |
+| 0x1b2cc0 | `Player_processDamage` | pending damage → hp, stagger, death |
+| 0x1b5330 | `Player_takeDamage` | |
+| 0x1b6a98 | `Player_meleeHit` | |
+| 0x1a42b8 | `Player_castSkill` | only route by which `Skill` objects are cast by a player |
+| 0x1a3f70 | `Player_updateCast` | |
+| 0x1b9520 | `Player_animStep` | |
+| 0x1b6458 | `player_recalcStats` | |
+| 0x1b1d70 | `player_initNewCharacter` | |
+| 0x1bd040 | `player_respawn` | |
+| 0x1b5fa0 | `player_recallTick` | |
+| 0x1be0d0 / 0x1bfa38 | `player_packRecord` / `player_unpackRecord` | |
+| 0x1bfdb0 | `invmsg_dispatch` | inventory changes arrive as game messages and are applied here |
+
+## Per-machine state
+
+### Places where shared state can be changed differently on one machine
+
+1. **The copy's death rebuilds the alive list.** `Player_processDamage` calls
+   `game_rebuildAlivePlayers` at 0x1b3504 with no test for the copy; `Player_run` calls
+   `Player_processDamage` at 0x1a5b90, also unguarded. The rebuild reads the object pointer
+   in each record, which during prediction is the copy, and drops slots whose object has
+   the dead flag. The table pointer, hp and mana are restored after prediction but the
+   list is not; `tasks_run` (0x3226e4) rebuilds it only at the *end* of each simulated
+   frame. **Observed.** Consequence: after the copy dies in prediction, the next simulated
+   frame on that machine runs with its own player missing from `g_alivePlayers` while the
+   other machines still have it. About 50 functions read that list (monsters, scripts,
+   skills). **Inferred** to desynchronise. The copy can die ahead of the real player
+   through the kill plane, which is applied to the copy too (0x1a5b38–0x1a5b8c writes
+   1,000,000 pending damage, no guard) — **Observed** — or if it was cloned while damage
+   was pending — **Inferred**. This is G10 without the restriction to PvP. Also at
+   0x1b351c the copy's death calls `net_closeLocalMenus(1)` (local UI only).
+2. **`mission_getMedal` reads the local player's record.** 0x1bf838 calls
+   `net_getLocalPlayerSlot` (0x1bf868) and reads that record's medal byte unless its third
+   argument is set. Script built-ins `getMedal` (0x142188) and `runMedalSuccess` (0x1417a4,
+   call at decompile line 64) pass 0; nine level scripts (`*MEDAL`) call `getMedal`.
+   **Observed.** Each record carries its owner's medals, so two machines can get different
+   answers inside a lockstep script. **Inferred** hazard; only the medal levels are
+   affected. (Callers 0x231360, 0x2313b4, 0x231438 pass 1 and read slot 0.)
+3. **`Player_castSkill` runs some skills for the copy.** For the copy, a skill whose flag
+   word (+4) has bit 0 set has its cast function called (0x1a4598, vslot 2) and the
+   returned spell is destroyed straight away (0x1a45d0). Anything else the cast
+   function changes stays changed. **Observed.** Which skills carry bit 0 is set by static
+   constructors and was not read — **Unknown**. Their "can use" functions (vslot 1) are
+   called for the copy from 0x1a4358, 0x1a5d54, 0x1a7088 and 0x1ab618 as well and must be
+   free of side effects.
+4. **Older ability paths have no test for the copy.** They are taken only by ability
+   records whose name is not the `Skill` marker (see D15/D16 for whether any character
+   has one). **Observed**, all in `Player_run`:
+   - 0x1a74b0 stores 1 to record +0x4a7c (active weapon set) for skill ids 4, 5, 6, 0x12,
+     0x13;
+   - 0x1a67b4 (state 0xc), 0x1abe68, 0x1ac120, 0x1ac378 create a `LightEffect` object;
+     0x1ac02c creates a projectile-class object (0x293704); 0x1ac164 creates an
+     `UnholyAura` (0x29486c). The object constructor's draw from `g_randSeed` is restored,
+     the object itself stays in this machine's world;
+   - 0x1ac400 does area damage (0x161270).
+   The status-counter stores on the same paths (0x1a71c4, 0x1abda0, 0x1abe90, 0x1ac068)
+   go to the copy's own object while predicting and are not shared state.
+   The matching code for the heavy attack (0x1a73e4) and for state 10 (0x1a6950,
+   0x1a69bc) *is* guarded, which suggests the unguarded paths are leftovers.
+5. **Target notification from the copy.** In state 1 the chosen target's slot 12 is called
+   with kind 3 at 0x1aa5b8, no guard (the ranged equivalent with kind 2 is guarded).
+   **Observed.** No class handles kind 3 today (the ten overrides test only kinds 0 and 2),
+   so this is latent.
+6. **Script hook from the copy.** 0x1a90f0 runs the arrow-shot notify script by name with
+   no guard. **Observed.** No level script on the disc defines it; latent.
+7. **Record +0x4a5c** is written by the copy (0x1a6270, 0x1a629c, 0x1a8078, 0x1a8084).
+   Already G8; nothing reads it.
+8. **`Player_takeDamage` early-outs** (0x1b536c–0x1b53f4) on `g_recallCountdown`, the
+   jump-gate state 0x500ae8 (through 0x27dd68), `g_menuInputLockout` 0x41b4fc and
+   `g_exitCountdown` 0x4f694a. **Observed.** If any of these differs between machines for
+   one frame, damage is dropped on one machine only. Not established here whether they
+   can differ: 0x41b4fc is zeroed at the top of every net tick; 0x4f694a and the recall
+   countdown are set by game message handlers. **Unknown.**
+
+### Per-machine reads that only reach local presentation (checked)
+
+- `Player_draw` writes object +0x464 and the globals at 0x4d8a30/0x4d8a38; `Player_run`
+  reads +0x464 only to decide whether to run `Player_weaponTrails` (0x1a5638).
+  **Observed**; trails use the cosmetic seed.
+- `Player_draw` calls `Player_interact` in display mode for the local slot (0x1a4800). In
+  that mode it writes only the prompt globals (0x4d8ac0, 0x4d8ad0, text at 0x864f50) and
+  never `g_scriptActivePlayer`. **Observed.** It does call slot 13 (prompt) of nearby
+  objects from draw code; those functions belong to other areas and were not read.
+- `player_voice` 0x1b7ba8 reads `net_isLocalSlot`, `g_localMenuOpen` and the audio status;
+  it writes only the cosmetic seed. **Observed** (ghostreach lists no other store).
+- State 1 uses `net_isLocalSlot` (0x1aa6f4) only to choose the frames on which swing
+  sounds play; those sounds draw from a third generator at 0x404468 (0x1aa990), which is
+  therefore not synchronised. **Observed.** Other users of 0x404468 (0x110d30, 0x24c994,
+  0x284b68, 0x2c7808, 0x2eec08, 0x308578) were not read.
+- `Player_animStep` passes no position for the machine's own real player (object flag
+  0x200000), which makes the animation code skip sound cues and not advance the cue
+  cursor; the returned event bits do not depend on it. **Observed** (0x16d748).
+- `Player_move` takes the camera yaw from the per-slot word at 0x5d0bc0 (0x13e0c8), which
+  `net_frameLoop` fills from the input record (0x13ac9c). The screen-edge clamp
+  (`Player_clampToScreen`, view planes) is used only when `g_networkMode` is 0.
+  **Observed.**
+- The aura globals (0x4d8a40–0x4d8ab0, 0x8659a0) and the HUD message timers 0x41b840 /
+  0x41b8c0 (0x1a75d0) are advanced by the copy too; their only readers are `Player_draw`,
+  `Player_run`'s own light code and the HUD. Floor decals added in state 4 (0x1ab4b4) and
+  `hud_showMessage` calls (0x1a6ebc, 0x1a7af0, 0x1a8040, 0x1aafc4) are likewise
+  unguarded and local. **Observed.**
+
+### Checked and found guarded against the copy
+
+Potion use (0x1a5998, 0x1a59f0; G8). Weapon swap and interact (0x1a5bf0, 0x1a5c1c). Health
+and mana regeneration and item timers (tests inside 0x1b3b90, 0x1b3900, 0x1bc560). Hit
+immunity countdown (0x1a5368). Ability button selection (0x1a5a44–0x1a5aac). Thrown
+projectile creation, ammunition count and item removal (0x1a86f0, 0x1a881c, 0x1a8884,
+0x1a8958). Arrow creation, arrow count, item removal and the ammunition pointer (0x1a9240,
+0x1a9344, 0x1a944c, 0x1a9520, 0x1a9544). Ranged target notification. `Player_meleeHit`
+(returns for the copy). Heavy-attack `LightEffect` (0x1a73e4). State 10 area damage and
+`GroundPoundEffect` (0x1a6950, 0x1a69bc). State 6 skill polling. The record countdowns at
+the end (0x1ac6e8–0x1ac74c). `Player_onTouch`. In `Player_processDamage`: the blood prop
+and the knock-back skill. In `Player_move`: the rush contact call.
+
+Writes that the prediction loop restores and so need no guard: every `g_randSeed` draw in
+`Player_run` and its direct callees (0x1a549c, 0x1a64c4, 0x1a8420 … 0x1ab490, and in
+0x1bba88, 0x1bc2f8, 0x1bcc20, 0x1b4020, 0x1b2cc0), and the mana stores at 0x1a5b04,
+0x1a7278, 0x1a94ac, 0x1ab6c0 and in `Player_castSkill`.
+
+## Not read
+
+`Creature_run` and everything under it, creature move/collide 0x1186d8, the damage function
+0x1e8230, the `net_closeLocalMenus` subtree, `Projectile_runThrown` 0x1ba940,
+`player_giveStartingItems` 0x1acc78 (20 KB of item grants), `Player_recalcDamage` beyond
+its interface, `Player_drawEquipped` 0x1a3580 (decompile failed), the equipment-cache
+functions in detail, and the menu list widget. Of ghostreach's 812 reachable functions I
+checked the direct callees of `Player_run` and the player-record writers; the deeper
+engine, sound and library entries were judged by what they write, not read.
+
+## Open questions
+
+- Which `Skill` objects have flag bit 0 (run for the copy)? Read the static constructors
+  that fill the objects at 0x6e14d8 onward, or dump skill +4 from a memory snapshot.
+- Does creature move/collide (0x1186d8) call the "touched" slot of other objects when the
+  mover is the copy? That would be shared state changed by the copy.
+- State 7: what sets it? No store of 7 to +0x58c exists as a constant; look for a computed
+  store or a clone from another object.
+- State 0xd for the copy calls the vehicle's slot 17 with the player's position (0x1a5efc)
+  and then 0x14f028 (0x1a5f04); whether the vehicle is changed by that is not established.
+- Record +0x58 versus +0x59, +0xe8–0xee, +0x128, +0x3748, +0x43d0: meanings.
+- Which button is the health potion and which the mana potion (`g_btnPotionA/B`).
+- Whether `player_importCharacter` reads the previous game's save format (layout and the
+  level cap of 50 suggest it — Inferred).
+- names.tsv calls 0x1309f0 `clone_50d590`; vtables.txt gives table 0x50d590 to class
+  `Teleporter`.

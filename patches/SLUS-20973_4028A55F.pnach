@@ -4,3 +4,9 @@ gametitle=Champions: Return to Arms (SLUS-20973) v2.00
 author=reverse engineering test patch, untested on a running game
 description=Stops cutscenes from nudging the speaking character's animation clock toward the local audio stream position (cut_advance, 0x199448). Cosmetic effect: lip movement may drift from the voice line. Every player in a game must use the same setting.
 patch=1,EE,00199448,word,10000060
+
+[Net test: alive list only rebuilt at end of frame]
+author=reverse engineering test patch, untested on a running game
+description=Removes the immediate rebuild of the alive-player list when a player dies (Player_processDamage, 0x1B3504). The list is still rebuilt at the end of every simulated frame, so a death is noticed up to one frame later, identically on every machine. Tests whether the local prediction copy dying early is what puts co-op games out of sync around deaths (FINDINGS G11-G13). Every player in a game must use the same setting.
+// was: 0C079CBE (jal game_rebuildAlivePlayers)
+patch=1,EE,001B3504,word,00000000
