@@ -45,7 +45,7 @@ own disc with the tools in this repository; they are not part of it.
 | G6 | Box queries never return the copy; object run and draw loops skip whatever the exclude mask names (0x20000 while simulating, 0x200000 while predicting and drawing) | Observed | 0x14a928 lines for 0x20000 and the mask; iter_begin 0x1a1a48; runObjects 0x14b910 |
 | G7 | Player_dtor skips its global side effects while the copy is being torn down | Observed | 0x1a1be4 |
 | G8 | In Player_run, potion use and interact are guarded against the copy. The float at player record +0x4a5c is written without a guard, and nothing else reads it | Observed | 0x1b9cb8 first test; player_run.c line 689; 0x1a6200–0x1a629c, 0x1a8054–0x1a8084, 0x1bd904 |
-| G9 | Player_processDamage runs for the copy too. In the two PvP modes its tail gives the killer a third of their mana, may spawn an orb object and updates the score with no test for the copy; none of that is restored | Observed | 0x1b2cc0 tail (after 0x1b3504); mode flags 0x4f711c, 0x4f7120 written only by game setup 0x1e15f8, 0x1e1888 |
+| G9 | Player_processDamage runs for the copy too. In the two PvP modes its tail gives the killer a third of their mana, and may spawn an orb object with no test for the copy; neither is restored. (The score functions it calls, 0x305580 and 0x305650, test for the copy themselves — docs/skills.md) | Observed | 0x1b2cc0 tail (after 0x1b3504); mode flags 0x4f711c, 0x4f7120 written only by game setup 0x1e15f8, 0x1e1888 |
 | G10 | PvP games go out of sync when the local copy dies in prediction | Inferred | From G3 and G9; does not apply to the arena level |
 | G11 | The alive-player list (count 0x4f8420, slots 0x4f8440) is rebuilt at the end of every simulated frame and also on the spot when a player dies. The on-the-spot rebuild has no test for the prediction copy, and prediction does not restore the list afterwards | Observed | tasks_run 0x3226e4 calls game_rebuildAlivePlayers after the run tasks, not before; Player_processDamage 0x1b3504; G3 |
 | G12 | The copy can die before the real player does. The kill plane under a level gives 1,000,000 pending damage to whichever object Player_run is running, copy included; and Player_clone copies the pending-damage fields (+0xc8, +0x2dc, +0x2e0, +0x2e8), so a copy made while damage is waiting on the real player processes that damage itself during prediction | Observed (each step); not observed happening | 0x1a5b38–0x1a5b8c; Player_clone 0x11e870; Player_run calls Player_processDamage at 0x1a5b90 with no test |
@@ -62,9 +62,10 @@ Tagar's Insects, burned by FireStorm or tripping the arena's trigger volumes (G6
 0x30d998, 0x2d470c, 0x1ecf3c); prediction leaving stale pad state (G5); the hit-flash flag
 0x100, which is moved to the copy after every tick but is read only by drawing (0x13af14,
 0x10b150); the "*inventoryOnNotify" script hook run when a menu opens (no level defines it); the knights'
-and Cazic's own AI functions reading camera, local-player or unsynchronised-seed state directly
-(Horsemen_run 0x27236c and 0x248598 read none; they use the per-object generator and the
-frame counter); Summon Skeleton treating a monster caster as a player slot (guarded by the
+own AI function reading camera, local-player or unsynchronised-seed state directly
+(Horsemen_run 0x27236c reads none; it uses the per-object generator and the frame counter.
+An earlier version of this ledger said the same of Cazic, citing 0x248598 — that function is
+Bubo's. Cazic's run is 0x24aaf0; see docs/monsters.md once that area is written up); Summon Skeleton treating a monster caster as a player slot (guarded by the
 is-player flag at 0x2e18a4, decompile lines for caster+0x3c8).
 
 ## Tools added for this
@@ -82,9 +83,9 @@ been read, the rest have not.
 
 | ID | Claim | Kind | Evidence |
 |---|---|---|---|
-| L1 | Gameplay traffic is peer to peer over SOE UdpLibrary; the lobby server is not in the path | Observed | strings + 0x329d58, upstream server source |
-| L2 | The reliable channel resends after about 300 ms + 1.25 × ping, capped at 8 s (library defaults, not overridden) | Observed | 0x32a6ac–0x32a764 |
-| L3 | A lost input packet therefore stalls every player for at least ~300 ms | Unknown | Whether per-frame input rides the reliable channel is not established |
+| L1 | Gameplay traffic is peer to peer, and the game's own netcode sends it as plain UDP datagrams through the PS2 network library. SOE UdpLibrary is used only by the lobby client's player-to-player handshake before play and is torn down when play starts. (Earlier versions of this ledger said gameplay ran over UdpLibrary; that was wrong.) | Observed | sceInetSendTo 0x365830 is called from 0x131b00, net_main 0x132e90, 0x1354f8, 0x135638, 0x135d48, 0x13c078; UdpConnection_Send 0x391430 is called only from 0x32b480–0x32bce8; manager deleted at 0x328770; docs/netlib.md |
+| L2 | UdpLibrary's reliable resend (300 ms + 1.25 × ping, capped at 8 s) therefore affects only that pre-game handshake, not play | Observed | constants 0x32a6ac (300), 0x32a6b0 (125), 0x32a6b4 (8000); docs/netlib.md |
+| L3 | What the game's own netcode does when an input datagram is lost — whether it resends, how soon, and what stalls meanwhile | Unknown | Belongs to the netcode area (0x131d88–0x13ecf8); see docs/netcode.md once written |
 
 ## What "source" the disc contains
 

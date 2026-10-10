@@ -1,0 +1,381 @@
+# addr	name	note
+00324288	lobby_task	run task (task_add priority 0x19, isDraw 0): every 10th call runs SRSClient_update, then a 15-state machine on the lobby state word 0x506160; state 7 hands peer addresses to the game netcode and tears the UdpManager down
+003277e0	lobby_deleteWindows	deletes the five window objects held at 0x506140..0x506150 through their virtual destructor
+00327f80	lobby_addTask	task_add(lobby_task, 0x19, name, 0) and sets lobby state 0xe
+00327fc0	lobby_stateIsMenu	true unless lobby state is 0, 0xc (in game) or 0xd (shutting down)
+00327fe8	lobby_shutdown	removes the task, deletes the SRSClient at 0x50613c and the windows
+00328198	lobby_sendRequest5b	API request type 0x5b with one u32 (0); upstream server calls it GetNetCharacterList
+003281e0	lobby_sendRequest5c	API request type 0x5c with a character id; reply fills the save buffer (upstream: GetCharacterData)
+003282a0	lobby_sendRequest5a	API request type 0x5a with a character id and 0 (upstream: DeleteCharacter)
+00328350	srs_getSessionId	returns SRSClient+0xd28, the wide string every session request sends (set by the login reply at 0x32eba8)
+003285a8	SRSClient_dtor	slot 1 of the API-client vtable 0x51c918; re-installs the three vtables then releases peers
+00328770	SRSClient_shutdownUdp	up to 100 rounds of flush + UdpManager_GiveTime(100,1) + DelayThread(100) while reliable bytes are pending, disconnects all peers, repeats, then deletes the UdpManager (+0x40 = 0)
+00328868	SRSClient_onFriendList	API callback slot 16 (reply type 0x62); assertion text names m_FriendList
+00328a10	SRSClient_onIgnoreList	API callback slot 17 (reply type 0x63); assertion text names m_IgnoreList
+00328b70	SRSClient_onPublicRooms	API callback slot 19 (reply type 0x0e); assertion text names m_Rooms
+00328db8	SRSClient_onRoomInfo	API callback slot 20 (reply type 0x11); builds the room player list text
+00329440	SRSClient_onMatchGame	API callback slot 48 (reply type 0x55); assertion text names m_Games
+00329880	SRSClient_onGetGame	API callback slot 51 (reply type 0x57)
+00329ec8	SRSClient_onClientRequestsConnect2	API callback slot 87 (notification 0x65: two address/port pairs); adds the requester to the seek list and calls srs_notifyClientRequestsConnect2
+0032a1b8	SRSClient_readKnownPeers	reads u8 count + peer records from a MemStream; unknown peers go to the seek list and get connection attempts
+0032a4b8	SRSClient_pingSeekPeers	for each seek-list peer: sends a 1-byte datagram (value 1) to its external address, or drops it after 15001 ms (constant 0x3a99) without contact
+0032a8d0	SRSClient_sendDiscoveryDatagram	sends the API's discovery blob from the UDP game socket to the lobby's discovery address by sceInetSendTo
+0032aeb0	SRSClient_joinGame	finds the game record, gets the UdpManager, seeds the seek list with the host and connects
+0032b480	SRSClient_sendEject	peer message 0x1f to one known peer, channel 4
+0032b660	SRSClient_sendCharInfo	stores own name/char bytes then peer message 0x1b + own peer record to every known peer, channel 4
+0032b7f8	SRSClient_sendStart	peer message 0x1a to every known peer on channel 4, then UdpManager_GiveTime(100,1)
+0032b9f0	SRSClient_disconnectPeerTable	disconnects both connections of each entry of one 4-entry peer table
+0032bba8	SRSClient_disconnectAllPeers	disconnects and clears the seek, known and reject tables and the local record; flags (+0x64) = 3
+0032bce8	SRSClient_welcomePeer	host only: sends 0x1d (new ident, game info, session string, peer list) to the newcomer, 0x19 (peer list) to everyone, 0x1b (own record) to the newcomer
+0032c2c0	SRSClient_onPeerConnected	common body of OnConnectRequest and OnConnectComplete: matches the connection's address against seek / reject / known tables
+0032ca18	SRSClient_OnRoutePacket	UdpConnectionHandler slot 1 (vtable 0x51cc08): parses u8 sender ident + u16 type 0x19..0x1f
+0032d098	SRSClient_OnTerminated	UdpConnectionHandler slot 3: removes the peer; losing ident 0 (host) drops everything and notifies the connect handler
+0032d368	SRSClient_update	advances the UdpLibrary clock counter 0x564208 by 10, UdpManager_GiveTime(100,1), API tick; every 10th call discovery datagram + seek-peer ping
+0032d498	SRSClient_setResultText	maps an API result code to one of the clientText1..68 string keys; called by 43 callbacks
+0032dfb8	SRSPeer_copy	copies a 0xa8-byte peer record including its two connection references
+0032e0f8	SRSPeer_setConnection	stores a UdpConnection in slot 0 (external) or 1 (internal) of a peer record, sets its handler, fixes reference counts
+0032e198	SRSPeer_getConnectedAddress	copies ip and port from whichever of the peer's two connections is in status 1; leaves the outputs untouched if neither is
+0032e328	SRSPeer_write	serialises a peer record to a MemStream
+0032e468	SRSPeer_read	reads a peer record from a MemStream
+0032e588	SRSGameInfo_write	serialises the game record at SRSClient+0x9c
+0032e6f8	SRSGameInfo_read	reads the game record
+0032e8b8	SRSClient_onApiDisconnected	API callback slot 3; prints one of the CONNECT FAILED / DISCONNECTED strings and notifies the connect handler with -6
+0032e9b8	SRSClient_onApiFatal	API callback slot 4; sets the fatal flag +0xd68 which stops SRSClient_update
+0032ea08	SRSClient_onCreateAccountResult	API callback slot 5 (reply type 0x06)
+0032eba8	SRSClient_onLoginResult	API callback slot 6 (reply type 0x16); stores the session string at +0xd28, sets flag 2, requests the public room list
+003301f0	SRSClient_onForcedLogout	API callback slot 89 (notification 0x41)
+003306a8	SRSClient_pendingReliableBytes	sum of UdpConnection_TotalPendingBytes over both connections of every known peer
+00330a40	SRSClient_startGame	host: API request 0x23, sets flag 0x100, SRSClient_sendStart
+00330ed8	SRSClient_OnConnectRequest	UdpManagerHandler slot 1 (vtable 0x51c8d8); tail-calls SRSClient_onPeerConnected
+00330ef8	SRSClient_OnConnectComplete	UdpConnectionHandler slot 2 (vtable 0x51cc08); adjusts this by -4 and calls SRSClient_onPeerConnected
+00330f18	SRSClient_nextFreeIdent	lowest ident in 1..maxPlayers-1 (+0x6c) not present in the known table, else -1
+00331340	MemStream_readString	u32 length + bytes into a buffer of given capacity
+003314a8	MemStream_readWString	u32 character count + 16-bit characters, capacity in characters
+00331628	MemStream_writeString	u32 length + bytes
+003317c0	MemStream_writeWString	u32 character count + 16-bit characters
+00331ed8	MemStream_write	(stream, ptr, size, count): raw copy, grows the buffer when the stream owns it
+00331fb8	MemStream_read	(stream, ptr, size, count): raw copy; on underrun sets the error flag and reports it through the MemStream error message
+003321e0	iop_loadModule	loads an IRX from cdrom0:\BG\0MOD\ unless already loaded; prints the module load result strings
+003323c8	iop_unloadModule	stops and unloads a module, logging each step
+0033a1f0	SRSUILoginWindow_HandlePadPress	name from its debug string
+0033ca00	SRSUIMainWindow_nextLobbyState	called from lobby state 6; returns 7 once SRSClient flag 0x100 (START) is set
+0033fab8	SRSUINetworkWindow_HandlePadPress	name from its debug string
+00340088	SRSUINetworkWindow_unloadNetModules	unloads DNAS, netglue and libinsck ERX modules and frees their memory
+00347b08	SRSUITextBox_draw	draw function of the text box widget; has the uninitialised-textbox warning; 12 callers
+0034c190	SRSUIChatControlWindow_updateLists	rebuilds the friend, ignore and public channel selection lists
+0034e068	netcfg_thread	thread body: loads eznetcnf.irx / eznetctl.irx and services configuration requests
+0034e7d8	netcfg_readConfigs	reads the network configurations from mc0:
+0034e950	netcfg_pollStatus	ezNetCtlGetStatus and decode of state / link
+0034eae0	netcfg_startInterface	ezNetCtlSetProperties + bring the interface up
+0034fe78	sceGsSyncPath	libgraph; strings
+00350190	libdma_waitIdle	spins while the channel control word has the busy bit 0x100; prints the libdma timeout message; 7 callers
+003509d8	scePadInit	libpad; module version check string
+00350e30	scePadPortOpen	libpad; port-already-open and buffer-alignment messages
+00352190	sceMtapInit	libmtap; module version check string
+003522b0	sceMtapPortOpen	libmtap; rpc error string
+00352320	sceMtapPortClose	libmtap; rpc error string
+00352470	sceMtapGetConnection	libmtap; rpc error string
+003524e0	sceMtapChangeThreadPriority	libmtap; rpc error string
+00352550	sceMtapGetModVersion	libmtap; rpc error string
+003525e0	SetGsCrt	libkernl stub: loads syscall number 0x2 and traps
+00352600	_Exit	libkernl stub: loads syscall number 0x4 and traps
+00352620	_LoadExecPS2	libkernl stub: loads syscall number 0x6 and traps
+00352630	_ExecPS2	libkernl stub: loads syscall number 0x7 and traps
+003526e0	RemoveIntcHandler	libkernl stub: loads syscall number 0x11 and traps
+00352710	RemoveDmacHandler	libkernl stub: loads syscall number 0x13 and traps
+00352720	_EnableIntc	libkernl stub: loads syscall number 0x14 and traps
+00352730	_DisableIntc	libkernl stub: loads syscall number 0x15 and traps
+00352740	_EnableDmac	libkernl stub: loads syscall number 0x16 and traps
+00352750	_DisableDmac	libkernl stub: loads syscall number 0x17 and traps
+003527e0	CreateThread	libkernl stub: loads syscall number 0x20 and traps
+003527f0	DeleteThread	libkernl stub: loads syscall number 0x21 and traps
+00352800	_StartThread	libkernl stub: loads syscall number 0x22 and traps
+00352820	ExitDeleteThread	libkernl stub: loads syscall number 0x24 and traps
+00352830	TerminateThread	libkernl stub: loads syscall number 0x25 and traps
+00352870	ChangeThreadPriority	libkernl stub: loads syscall number 0x29 and traps
+00352890	RotateThreadReadyQueue	libkernl stub: loads syscall number 0x2b and traps
+003528d0	GetThreadId	libkernl stub: loads syscall number 0x2f and traps
+003528e0	ReferThreadStatus	libkernl stub: loads syscall number 0x30 and traps
+00352900	SleepThread	libkernl stub: loads syscall number 0x32 and traps
+00352910	WakeupThread	libkernl stub: loads syscall number 0x33 and traps
+00352950	SuspendThread	libkernl stub: loads syscall number 0x37 and traps
+00352970	ResumeThread	libkernl stub: loads syscall number 0x39 and traps
+003529c0	EndOfHeap	libkernl stub: loads syscall number 0x3e and traps
+003529e0	CreateSema	libkernl stub: loads syscall number 0x40 and traps
+003529f0	DeleteSema	libkernl stub: loads syscall number 0x41 and traps
+00352a00	SignalSema	libkernl stub: loads syscall number 0x42 and traps
+00352a10	iSignalSema	libkernl stub: loads syscall number -0x43 and traps
+00352a20	WaitSema	libkernl stub: loads syscall number 0x44 and traps
+00352a30	PollSema	libkernl stub: loads syscall number 0x45 and traps
+00352a90	GetOsdConfigParam	libkernl stub: loads syscall number 0x4b and traps
+00352c60	FlushCache	libkernl stub: loads syscall number 0x64 and traps
+00352cf0	GetOsdConfigParam2	libkernl stub: loads syscall number 0x6f and traps
+00352d50	SetVSyncFlag	libkernl stub: loads syscall number 0x73 and traps
+00352d80	sceSifDmaStat	libkernl stub: loads syscall number 0x76 and traps
+00352da0	sceSifSetDma	libkernl stub: loads syscall number 0x77 and traps
+00352dc0	sceSifSetDChain	libkernl stub: loads syscall number 0x78 and traps
+00352de0	sceSifSetReg	libkernl stub: loads syscall number 0x79 and traps
+00352df0	sceSifGetReg	libkernl stub: loads syscall number 0x7a and traps
+00352e10	Deci2Call	libkernl stub: loads syscall number 0x7c and traps
+00352e30	MachineType	libkernl stub: loads syscall number 0x7e and traps
+00352e40	GetMemorySize	libkernl stub: loads syscall number 0x7f and traps
+00353a58	DelayThread	creates a semaphore named SceKernelDelayThread, sets an alarm and waits on it
+00356510	sceSifBindRpc	sifrpc; creates a semaphore named SceSifrpcBind
+003566f0	sceSifCallRpc	sifrpc; creates a semaphore named SceSifrpcCall; 140 direct callers
+00357b30	sceOpen	fileio; identified by the per-call semaphore name it creates (SceStdio...Sema)
+00357dc0	sceClose	fileio; identified by the per-call semaphore name it creates (SceStdio...Sema)
+00357f38	sceLseek	fileio; identified by the per-call semaphore name it creates (SceStdio...Sema)
+00358178	sceRead	fileio; identified by the per-call semaphore name it creates (SceStdio...Sema)
+003583e8	sceWrite	fileio; identified by the per-call semaphore name it creates (SceStdio...Sema)
+003586a8	sceIoctl	fileio; identified by the per-call semaphore name it creates (SceStdio...Sema)
+00358a30	sceIoctl2	fileio; identified by the per-call semaphore name it creates (SceStdio...Sema)
+00358de8	sceMkdir	fileio; identified by the per-call semaphore name it creates (SceStdio...Sema)
+00358fc0	sceFormat	fileio; identified by the per-call semaphore name it creates (SceStdio...Sema)
+00359458	sceDclose	fileio; identified by the per-call semaphore name it creates (SceStdio...Sema)
+003595c0	sceDread	fileio; identified by the per-call semaphore name it creates (SceStdio...Sema)
+00359718	sceGetstat	fileio; identified by the per-call semaphore name it creates (SceStdio...Sema)
+003598d0	sceChstat	fileio; identified by the per-call semaphore name it creates (SceStdio...Sema)
+00359b20	sceRename	fileio; identified by the per-call semaphore name it creates (SceStdio...Sema)
+00359d48	sceSync	fileio; identified by the per-call semaphore name it creates (SceStdio...Sema)
+00359ef8	sceMount	fileio; identified by the per-call semaphore name it creates (SceStdio...Sema)
+0035a198	sceLseek64	fileio; identified by the per-call semaphore name it creates (SceStdio...Sema)
+0035a3d8	sceDevctl	fileio; identified by the per-call semaphore name it creates (SceStdio...Sema)
+0035a680	sceSymlink	fileio; identified by the per-call semaphore name it creates (SceStdio...Sema)
+0035a878	sceReadlink	fileio; identified by the per-call semaphore name it creates (SceStdio...Sema)
+0035bed8	sceSifRebootIop	builds the UDNL reset command line
+0035ece0	sceSdRemoteInit	libsdr; RPC bind error string
+0035f560	sceMcInit	libmc; bind and version strings
+003613a0	sceCdSearchFile	libcdvd; debug strings
+00361bc8	sceCdInit	libcdvd; its bind-error message names CD_Init
+00361eb0	sceCdDiskReady	libcdvd; its trace messages name DiskReady (the older of two variants; the newer is 0x3620c8)
+003622e8	sceCdReadChain	libcdvd; its trace messages name CdReadChain
+00362600	sceCdRead	libcdvd; its trace message names the cdread command
+00362e28	sceCdStRead	libcdvd; debug string
+00362fb0	sceCdStPause	libcdvd; debug string
+00363000	sceCdStResume	libcdvd; debug string
+00363058	sceCdStStat	libcdvd; debug string
+00364a18	sceSifMBindRpc	libmrpc; semaphore names SceMrpcBind0/1
+00364be8	sceSifMUnBindRpc	libmrpc; semaphore name SceMrpcUnbind
+00364d28	sceSifMCallRpc	libmrpc; its own name appears in the alignment message
+00364fb8	libnet_callRpc	29 callers; checks the request against the shared buffer size (the fatal message names Libnet) and issues the multi-thread RPC
+003651e0	sceInetPoll	libnet; (cd, buf, pollfd array, count, ms) as used by the API TCP connect check
+00365288	sceInetName2Address	libnet; (cd, buf, flags, addr out, name, ms, retries); its callers report a DNS failure when it returns non-zero
+00365348	sceInetAddress2String	libnet; (cd, buf, out, 0x40, addr)
+003654a8	sceInetCreate	libnet; (cd, buf, 0x40-byte parameter block) returns a connection id
+00365518	sceInetOpen	libnet; (cd, buf, id, ms)
+00365560	sceInetClose	libnet; (cd, buf, id, ms)
+003655a8	sceInetRecv	libnet; (cd, buf, id, ptr, len, flags, ms)
+00365670	sceInetRecvFrom	libnet RPC function 0xd; (cd, buf, id, ptr, len, flags, addr out, port out, ms); the game netcode calls it directly
+00365780	sceInetSend	libnet; used by the API TCP sender
+00365830	sceInetSendTo	libnet; (cd, buf, id, ptr, len, flags, addr, port, ms); 7 game-netcode callers and the UdpLibrary driver
+00365a08	sceInetGetInterfaceList	libnet; (cd, buf, id list, 10)
+00365a90	sceInetInterfaceControl	libnet; (cd, buf, interface, code, ptr, len)
+00365ec0	sceLibnetInitialize	libnet; (cd, buffer size, stack size, priority); the caller logs the result as libnet_init
+003664f0	libnet_swap16	byte swap of a 16-bit value
+00366508	libnet_swap32	byte swap of a 32-bit value
+00367da8	ezNetCnfInit	eznet RPC client; the function prints its own name in its trace message
+00367f18	ezNetCnfGetCount	eznet RPC client; the function prints its own name in its trace message
+00367fd8	ezNetCnfGetCombinationList	eznet RPC client; the function prints its own name in its trace message
+00368110	ezNetCnfGetCombination	eznet RPC client; the function prints its own name in its trace message
+003681c0	ezNetCnfGetDefault	eznet RPC client; the function prints its own name in its trace message
+00368270	ezNetCnfGetProperties	eznet RPC client; the function prints its own name in its trace message
+00368eb0	lgKbMInit	Logitech keyboard/mouse library 1.06.001; init banner
+0036b078	lgAudInit	liblgaud 1.09.004 (Logitech USB audio); name from its own error strings
+0036b530	lgAudOpen	liblgaud 1.09.004 (Logitech USB audio); name from its own error strings
+0036b698	lgAudRead	liblgaud 1.09.004 (Logitech USB audio); name from its own error strings
+0036b808	lgAudWrite	liblgaud 1.09.004 (Logitech USB audio); name from its own error strings
+0036b978	lgAudWriteVag	liblgaud 1.09.004 (Logitech USB audio); name from its own error strings
+0036bae8	lgAudPrepareForReboot	liblgaud 1.09.004 (Logitech USB audio); name from its own error strings
+0036bbd8	lgAudARead	liblgaud 1.09.004 (Logitech USB audio); name from its own error strings
+0036bd50	lgAudAWrite	liblgaud 1.09.004 (Logitech USB audio); name from its own error strings
+0036bed8	lgAudAWriteVag	liblgaud 1.09.004 (Logitech USB audio); name from its own error strings
+0036c130	lgAudEnumHint	liblgaud 1.09.004 (Logitech USB audio); name from its own error strings
+0036c1a0	lgAudEnumerate	liblgaud 1.09.004 (Logitech USB audio); name from its own error strings
+0036c360	lgAudClose	liblgaud 1.09.004 (Logitech USB audio); name from its own error strings
+0036c428	lgAudGetRemainingPlaybackBytes	liblgaud 1.09.004 (Logitech USB audio); name from its own error strings
+0036c500	lgAudGetAvailableRecordingBytes	liblgaud 1.09.004 (Logitech USB audio); name from its own error strings
+0036c5d8	lgAudGetMixer	liblgaud 1.09.004 (Logitech USB audio); name from its own error strings
+0036c9a0	lgAudStartPlayback	liblgaud 1.09.004 (Logitech USB audio); name from its own error strings
+0036cb30	lgAudResumePlayback	liblgaud 1.09.004 (Logitech USB audio); name from its own error strings
+0037a5d8	ezNetCtlInit	eznet RPC client; the function prints its own name in its trace message
+0037a750	ezNetCtlSetProperties	eznet RPC client; the function prints its own name in its trace message
+0037a868	ezNetCtlSetCombination	eznet RPC client; the function prints its own name in its trace message
+0037a958	ezNetCtlPreloadModemCnf	eznet RPC client; the function prints its own name in its trace message
+0037aa18	ezNetCtlUnloadModemCnf	eznet RPC client; the function prints its own name in its trace message
+0037aac8	ezNetCtlUpInterface	eznet RPC client; the function prints its own name in its trace message
+0037ab58	ezNetCtlDownInterface	eznet RPC client; the function prints its own name in its trace message
+0037abe8	ezNetCtlGetStatus	eznet RPC client; the function prints its own name in its trace message
+0037ad38	ezNetCtlWaitEventTO	eznet RPC client; the function prints its own name in its trace message
+0037c9a0	SOEGamesAPI_process	per-update tick called by SRSClient_update with the seconds counter 0x564330
+0037cbcc	SOEGamesAPI_buildDiscoveryBlob	AES-encrypts the session string into a caller buffer (at most 64 bytes) and returns the length; payload of SRSClient_sendDiscoveryDatagram
+0037cc64	soeapi_writeHeader	u16 type, u32 tracking number, u32 word 0 of the API object
+0037cd14	soeapi_writeHeaderWithSession	soeapi_writeHeader followed by the AES-encrypted session string as a wide string
+0037cde4	soeapi_sendSessionRequest	complete request whose body is only the session string; used by types 5, 7, 0xb, 0xe, 0x17, 0x24, 0x46, 0x52, 0x61, 0x62, 0x63
+0037cec4	APICore_submitGetServerAddress	request type 0x43, body u32 0xc, no session; named by APICore::onConnect's trace string
+0037cf98	APICore_submitGetEncryptionKey	request type 0x27, body byte string + u32 0xc, no session; named by APICore::onConnect's trace string
+0037d090	soeapi_request06	builds and sends request type 0x06: five encrypted wide strings (first three written here), no session; upstream: CreateAccount
+0037d354	soeapi_request16	builds and sends request type 0x16: two encrypted wide strings, no session; upstream: Login
+0037d4b4	soeapi_request64	builds and sends request type 0x64: two encrypted wide strings, no session
+0037d9a4	soeapi_request42	builds and sends request type 0x42: two byte strings, no session; upstream: GetRules
+0037dd9c	soeapi_request11	builds and sends request type 0x11: session + wide string; upstream: GetRoom
+0037de98	soeapi_request09	builds and sends request type 0x09: session + wide string; upstream: CreatePrivateRoom
+0037df94	soeapi_request0c	builds and sends request type 0x0c: session + wide string; upstream: EnterRoom
+0037e090	soeapi_request15	builds and sends request type 0x15: session + wide string; upstream: LeaveRoom
+0037e18c	soeapi_request22	builds and sends request type 0x22: session + two wide strings; upstream: SendRoomMessage
+0037e2ac	soeapi_request21	builds and sends request type 0x21: session + two wide strings; upstream: SendInstantMessage
+0037e3cc	soeapi_request01	builds and sends request type 0x01: session + wide string; upstream: AddFriend
+0037e4c8	soeapi_request1c	builds and sends request type 0x1c: session + wide string; upstream: RemoveFriend
+0037e5c4	soeapi_request02	builds and sends request type 0x02: session + wide string; upstream: AddIgnore
+0037e6c0	soeapi_request1d	builds and sends request type 0x1d: session + wide string; upstream: RemoveIgnore
+0037ef9c	soeapi_request19	builds and sends request type 0x19: session + two wide strings
+0037f33c	soeapi_request0f	builds and sends request type 0x0f: header only, no session; upstream: GetRealmStats
+0037f708	soeapi_request54	builds and sends request type 0x54: session, u16, u32 x3, wide string, option list, blob, wide string, u32, wide string, u32; upstream: CreatePublicGame (RTA)
+0037f950	soeapi_request56	builds and sends request type 0x56: session, wide string x2, u32, wide string, u32; upstream: CreatePrivateGame (RTA)
+0037fac8	soeapi_request55	builds and sends request type 0x55: session, u16, u32, u32, i32, option list, u8, u32, u32; upstream: MatchGame (RTA)
+00380278	soeapi_request57	builds and sends request type 0x57: session + wide string; upstream: GetGame (RTA)
+00380374	soeapi_request23	builds and sends request type 0x23: session, u8, u16, list; upstream: StartGame
+003804f8	soeapi_request66	builds and sends request type 0x66: session, u32, wide string, i32; upstream: DoClientDiscovery (RTA)
+00380888	soeapi_request58	builds and sends request type 0x58: session, u32, wide string, two lists, blob, u32 0; 0x10400-byte buffer; upstream: CreateNewCharacter
+00380f08	soeapi_request5e	builds and sends request type 0x5e: session, encrypted wide string, u32, u32, wide string, two lists, blob, u32 0; upstream: SaveCharacter
+003812c4	soeapi_request5a	builds and sends request type 0x5a: session, u32, u32; upstream: DeleteCharacter
+00381420	soeapi_request5b	builds and sends request type 0x5b: session, u32; upstream: GetNetCharacterList
+00381554	soeapi_request5f	builds and sends request type 0x5f: session, encrypted wide string; sent after a peer WELCOME; upstream: UserJoinSuccess
+003816c0	soeapi_request60	builds and sends request type 0x60: session only; upstream: CancelGame (RTA)
+003817b0	soeapi_request5c	builds and sends request type 0x5c: session, u32; upstream: GetCharacterData
+00381de8	APICore_nextTrackingNumber	pre-increments the counter at +0x148, skipping 0
+00381e58	APICore_sendRequest	sends the buffer through the TCP connection and records the pending request with its timeout; falls back to APICore_queueLocalResult
+00381f48	APICore_queueLocalResult	queues a locally generated result (code 0x2d on build failure) for the request
+00381f80	APICore_onMessage	called per received frame: parses the header, matches the tracking number to a pending request, dispatches to the response or notification callback
+003826e0	soeapi_putString	u32 length then bytes
+00382790	soeapi_putWString	u32 character count then 16-bit characters
+00382844	soeapi_putU8	one byte
+003828d4	soeapi_putU16	two bytes, low first
+003829cc	soeapi_putU32	four bytes, low first
+00382efc	soeapi_getBool	one byte, non-zero is true
+00382f8c	soeapi_getU16	two bytes, low first
+00383098	soeapi_getU32	four bytes, low first
+003837bc	APICore_readResponseHeader	u16 type, u32 tracking number, u32 result
+00383858	APICore_responseCallbackError	its trace string names APICore::responseCallback and errorCode; delivers a failure to the per-type client callback
+003841dc	APICore_responseCallback	its trace string names APICore::responseCallback and result; per-type reply parser that calls the client's virtual callbacks
+00387124	APICore_connectSequence	handles the replies to 0x43 (host string + port: reconnect there) and 0x27 (key blob: decrypt with the fixed key and install as session key)
+00387388	APICore_notificationCallback	parser for unsolicited messages (types 0x2a..0x65) that calls the client's virtual callbacks
+00388a34	APICore_onConnect	submits 0x43 on the first connection, 0x27 after the redirect
+00388b14	APICore_onDisconnect	trace string
+00388bbc	APICore_onConnectFailed	trace string
+00388c50	APICore_encryptWString	AES-encrypts a wide string in place with the session key (output: u32 plain length + padded ciphertext)
+00388cfc	APICore_decryptWString	inverse of APICore_encryptWString
+0038a034	soeapi_getString	u32 length then bytes into a byte-string object
+0038a158	soeapi_getWString	u32 character count then 16-bit characters into a wide-string object
+0038b858	apiconn_update	TCP connection state machine: resolve + connect, poll, send queue, receive, timeouts
+0038bf2c	apitcp_connect	DNS lookup, sceInetCreate with a TCP parameter block, sceInetOpen
+0038c0c8	apitcp_close	sceInetClose and drop of the pending send queue
+0038c1e4	apitcp_sendFramed	sends a 4-byte big-endian length (payload + 4) then the payload, queueing what does not go out
+0038c65c	apitcp_readLength	reads the 4-byte big-endian frame length and sizes the receive buffer
+0038c778	apitcp_readBody	reads up to 0x400 bytes at a time; hands a complete frame to APICore_onMessage
+0038c8c8	apicrypt_ctor	copies the two fixed key strings from 0x55b700 and 0x55b728; first use seeds the C random generator
+0038caf0	apicrypt_encryptFixedKey	AES-256 ECB with the fixed 32-character key at +0x0c
+0038cd08	apicrypt_decryptFixedKey	AES-256 ECB decrypt with the fixed key; used on the 0x27 reply
+0038cf34	apicrypt_encrypt	AES-256 ECB with the session key at +0x18; zero-pads to (len & ~15) + 16 and prefixes the plain length
+0038d14c	apicrypt_decrypt	inverse of apicrypt_encrypt
+0038d48c	rijndael_setup	LibTomCrypt aes.c key schedule; its two error messages name rijndael
+0038da40	rijndael_ecb_encrypt	one 16-byte block; reached only through aes_encryptBlocks
+0038ef90	rijndael_ecb_decrypt	one 16-byte block; reached only through aes_decryptBlocks
+00390518	rijndael_test	self test against the AES-128/192/256 vectors; no callers
+00390748	aes_encryptBlocks	loops rijndael_ecb_encrypt over len/16 blocks
+003907cc	aes_decryptBlocks	loops rijndael_ecb_decrypt over len/16 blocks
+00390b30	UdpConnection_ctorClient	(manager, ip, port, connect timeout): status 0 (negotiating), random connect code, registers with the manager and gives itself time
+00390c88	UdpConnection_ctorServer	built from a received connect packet: status 1, copies crc/encrypt settings from the manager, processes the packet
+00390e50	UdpConnection_Init	common field setup; copies noDataTimeout (manager+0x48) to +0x134 and keepAliveDelay (manager+0x30) to +0x1e0
+00390f9c	UdpConnection_dtor	vtable 0x51d920 slot 5; disconnects with reason 14 and deletes the four channels
+003910f4	UdpConnection_PortUnreachable	ICMP handling: disconnect reason 1 after icmpErrorRetryPeriod
+003911dc	UdpConnection_InternalDisconnect	(flush timeout, reason): optional disconnect-pending state 3, sends the terminate packet, removes itself from the manager, status 2
+00391388	UdpConnection_SendTerminatePacket	packet type 5 with connect code and reason
+003913e8	UdpConnection_SetSilentDisconnect	writes +0x144
+00391430	UdpConnection_Send	(channel, data, len) public entry; asserts on dataLen and data (UdpConnection.cpp); only callers are SRSClient functions, always channel 4
+0039154c	UdpConnection_SendLogicalPacket	(channel, packet) overload; no callers
+00391698	UdpConnection_InternalSend	asserts the channel range; promotes oversize unreliable/ordered sends to channel 4; jump table 0x55faa0 per channel
+003919c4	UdpConnection_PingStatReset	zeroes the clock-sync statistics
+00391a30	UdpConnection_GetStats	copies the statistics block; reports channel 0's average ping (+0x8c)
+00391bf0	UdpConnection_ProcessRawPacket	stamps last-receive time, checks crc, runs the decrypt passes, then UdpConnection_ProcessCookedPacket
+00392214	UdpConnection_CallbackRoutePacket	counts and forwards an application packet to the manager callback
+003922ac	UdpConnection_CallbackCorruptPacket	counts and forwards a corrupt-packet event
+00392354	UdpConnection_ProcessCookedPacket	switch on the internal packet type 0..0x1e (jump table 0x55fad0)
+00393674	UdpConnection_FlushChannels	gives the connection time then flushes its multi-buffer; no direct callers
+0039370c	UdpConnection_GiveTime	guards and calls UdpConnection_InternalGiveTime
+003937b4	UdpConnection_InternalGiveTime	per-status housekeeping: connect retries, clock sync, reliable channels, multi-buffer hold time, keep-alive, port-alive, no-data timeout
+003941dc	UdpConnection_TotalPendingBytes	sum of queued + outstanding bytes over the four reliable channels
+00394258	UdpConnection_RawSend	hands the datagram to UdpManager_ActualSend and stamps last-send time (+0x180)
+00394534	UdpConnection_PhysicalSend	runs the encrypt passes, appends the crc, calls UdpConnection_RawSend
+0039492c	UdpConnection_BufferedSend	appends to the multi-buffer if total + 3 fits min(maxDataHoldSize, maxRawPacketSize), else sends at once
+00394ba4	UdpConnection_FlushMultiBuffer	sends the multi-buffer (type 3 wrapper dropped when it holds one packet)
+0039517c	UdpConnection_SetupEncryptModel	selects the encrypt/decrypt member functions per pass
+003953c8	UdpConnection_GetChannelStatus	(channel 4..7, out) forwards to the reliable channel
+00395454	UdpConnection_DisconnectReasonText	table of the 15 DisconnectReason... names
+003957d0	UdpDriverPS2_ctor	allocates the 0x30-byte socket state; vtable 0x51d9c8
+00395830	UdpDriverPS2_dtor	vtable slot 1
+003958c0	UdpDriverPS2_SocketOpen	vtable slot 2: sceInetCreate + sceInetOpen for the data socket and a second (ICMP) one
+003959d0	UdpDriverPS2_SocketClose	vtable slot 3
+00395af0	UdpDriverPS2_SocketReceive	vtable slot 4: sceInetRecvFrom; on -500 reads the ICMP socket instead
+00395bc4	UdpDriverPS2_SocketSend	vtable slot 5: sceInetSendTo
+00395d48	UdpDriverPS2_GetHostByName	vtable slot 9: sceInetName2Address, 5000 ms
+00395e3c	UdpDriverPS2_Clock	vtable slot 12: (counter at 0x564208) x 16.66666 (double at 0x55fe30), made monotonic with an offset
+00395fe0	UdpDriverPS2_ReadIcmpError	reads the ICMP socket and extracts the unreachable address/port
+00396134	UdpGuard_Enter	empty on this platform; 121 call sites
+0039613c	UdpGuard_Leave	empty on this platform; 121 call sites
+00396350	UdpIpAddress_ctor	stores a 32-bit address
+00396358	UdpIpAddress_GetAddress	formats the dotted address into a caller buffer; asserts on buffer (UdpLibrary.cpp)
+003963c8	UdpRefCount_AddRef	vtable slot 1 of every UdpLibrary object; asserts on mNoRef / mRefCount
+0039645c	UdpRefCount_Release	vtable slot 2; deletes at zero
+0039700c	UdpManager_dtor	vtable 0x51db30 slot 5: disconnects every connection with reason 4, closes the socket, frees pools and tables
+00397454	UdpManager_CreateAndBindSocket	closes then opens the driver socket on a port; error condition (+0x22c) = 2 on failure
+003974c0	UdpManager_CloseSocket	driver slot 3
+003974f0	UdpManager_GetErrorCondition	returns +0x22c
+00397530	UdpManager_ProcessDisconnectPending	drops connections in the disconnect-pending list that reached status 2
+003975e4	UdpManager_RemoveConnection	unlinks from the connection list, both hash tables and the priority queue
+003976a8	UdpManager_AddConnection	links into the list and the address / connect-code hash tables
+00397758	UdpManager_FlushAllMultiBuffer	UdpConnection_FlushMultiBuffer on every connection
+00397814	UdpManager_DeliverEvents	drains queued callback events (types 1..6) when event queuing is on
+00397c30	UdpManager_GiveTime	(max polling ms, give connections time): receive loop, then every connection's GiveTime (all of them, because the priority queue is disabled), then the simulated-delay send queue
+003981a0	UdpManager_EstablishConnection	(address string, port, timeout): resolves the name, refuses duplicates and over maxConnections, creates a client UdpConnection
+00398348	UdpManager_KeepUntilDisconnected	adds a connection to the disconnect-pending list
+003983b0	UdpManager_GetStats	asserts on stats (UdpManagerPS2.cpp)
+003984f4	UdpManager_ResetStats	zeroes the statistics block and stamps the reset time
+0039855c	UdpManager_DumpPacketHistory	asserts on filename (UdpManagerPS2.cpp); writes a hex dump of the packet history
+0039877c	UdpManager_ActualReceive	receive with the optional simulated incoming delay queue
+0039896c	UdpManager_ActualReceiveHelper	driver slot 4 into the packet-history ring; counts bytes and packets
+00398b44	UdpManager_ActualSend	counts, then sends directly or through the simulation queue
+00398d0c	UdpManager_ActualSendHelper	driver slot 5 with optional simulated loss
+00398de4	UdpManager_SendPortAlive	2-byte packet type 0x1c through driver slot 6
+00398e34	UdpManager_ProcessRawPacket	routes a datagram to its connection by address; handles connect requests, remap requests and the unreachable reply
+0039910c	UdpManager_AddressGetConnection	hash lookup by ip ^ port
+0039919c	UdpManager_ConnectCodeGetConnection	hash lookup by connect code
+00399200	UdpManager_CreatePacket	takes a pooled logical packet when pooling is on and the data fits, else allocates one
+00399604	UdpManager_CallbackRoutePacket	direct handler call or queued event 1
+0039970c	UdpManager_CallbackConnectComplete	direct handler call or queued event 2
+003997b8	UdpManager_CallbackTerminated	direct handler call or queued event 3
+00399864	UdpManager_CallbackCrcReject	direct handler call or queued event 4
+0039996c	UdpManager_CallbackPacketCorrupt	direct handler call or queued event 5
+00399a88	UdpManager_CallbackConnectRequest	manager handler slot 1, plus queued event 6
+00399e20	UdpReliableChannel_ctor	(channel number, connection, config): copies the 0x34-byte config, average ping starts at 800, sizes the windows and the two packet arrays
+0039a140	UdpReliableChannel_dtor	releases queued and outstanding packets and both arrays
+0039a2a4	UdpReliableChannel_Send	wakes the channel if idle; small sends go to the coalesce packet, others are queued as logical packets
+0039a3fc	UdpReliableChannel_FlushCoalesce	closes the group packet (unwraps it when it holds a single message) and queues it
+0039a4bc	UdpReliableChannel_SendCoalesce	appends length-prefixed data to the group packet (type 0x19), flushing when full
+0039a618	UdpReliableChannel_QueueLogicalPacket	adds to the logical queue and to the queued-bytes total (+0x7c)
+0039a68c	UdpReliableChannel_PullDown	moves queued logical data into outstanding window slots, fragmenting to +0x90 bytes
+0039a87c	UdpReliableChannel_GiveTime	computes the resend delay (0x39a96c-0x39a9b0), sends new and timed-out packets within the congestion window, returns ms until it next needs time
+0039b190	UdpReliableChannel_GetChannelStatus	fills a 12-word status record
+0039b328	UdpReliableChannel_ReliablePacket	incoming reliable/fragment packet: window check, in-order delivery or stash, then sends Ack (0x11+n) or AckAll (0x15+n)
+0039b718	UdpReliableChannel_ProcessPacket	delivers a whole packet or reassembles fragments, then UdpConnection_ProcessCookedPacket
+0039b890	UdpReliableChannel_AckAllPacket	acks every id up to the given one; adds 400 to the average ping (capped) when the id is older than the oldest pending
+0039b950	UdpReliableChannel_Ack	frees the slot, grows the congestion window, and for never-resent packets folds the round trip into the average ping as (3*avg + sample)/4
+0039c1a8	UdpPooledLogicalPacket_ctor	0x38-byte pooled packet bound to the manager
+0039c628	UdpMisc_Random	Park-Miller style generator on a seed pointer; used for connect codes and port choice
+0039c684	UdpMisc_Crc32	table-driven crc with a 32-bit seed
+0039c7fc	UdpMisc_PutVariableValue	1, 3 or 7 byte length prefix (0xff escapes)
+0039c86c	UdpMisc_GetVariableValue	inverse of UdpMisc_PutVariableValue
+0039c8e8	UdpMisc_CreateQuickLogicalPacket	allocates a one-shot logical packet holding up to two data pieces
+003a07e0	sceErxStopUnloadModule	liberx; name from its own panic string
+003a0890	sceErxStopUnloadModuleAsync	liberx; name from its own panic string
+003a0940	sceErxSelfStopUnloadModule	liberx; name from its own panic string
+003a0a40	sceErxSelfStopUnloadLoadStartModuleFile	liberx; name from its own panic string

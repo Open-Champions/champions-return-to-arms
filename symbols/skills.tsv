@@ -1,0 +1,860 @@
+# skills area (0x2c3cd4-0x320000): Skill and Spell classes, their projectiles and effects, the arena mode
+# Slot names follow docs/skills.md. Names of the form Class_slotMeaning were assigned from the virtual tables.
+002c3cd4	SkillShock_initStats	Skill slot 9: writes the per-level statistic tables
+002c3d68	SkillShock_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002c3df8	SkillShock_describeRank	Skill slot 4: builds the per-rank description text
+002c3f28	SkillShock_manaCost	Skill slot 5: mana cost for a level (float)
+002c3f5c	ShockProjectile_dtor	GameObject slot 1
+002c3fe4	ShockProjectile_ctor	sets the ShockProjectile virtual table; callers 2c3d68
+002c42e4	ShockProjectile_run	GameObject slot 4: once per simulated frame
+002c4e64	ShockProjectile_draw	GameObject slot 5
+002c5124	shock_staticInit	static initialiser, attributed by position to the SkillShock source file; registers particle type descriptors through 0x18f3d0
+002c5220	shock_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002c5240	StaticFire_ctor	sets the StaticFire virtual table; callers 155fcc,1ee330,262f7c,263b78,311638
+002c54f8	StaticFire_ctor2	sets the StaticFire virtual table; callers 159c94
+002c5770	StaticFire_dtor	GameObject slot 1
+002c5814	StaticFire_initCommon	body shared by both StaticFire constructors
+002c595c	StaticFire_run	GameObject slot 4: once per simulated frame
+002c65e8	StaticFire_draw	GameObject slot 5
+002c6ea0	staticFire_staticInit	static initialiser, attributed by position to the StaticFire source file; registers particle type descriptors through 0x18f3d0
+002c6ff4	staticFire_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002c7014	SkillGroundPound_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002c7080	SkillGroundPound_initStats	Skill slot 9: writes the per-level statistic tables
+002c7140	SkillGroundPound_canUse	Skill slot 1: may this caster use it now
+002c71ec	SkillGroundPound_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002c72ec	SkillGroundPound_describeRank	Skill slot 4: builds the per-rank description text
+002c7478	SkillGroundPound_manaCost	Skill slot 5: mana cost for a level (float)
+002c74ac	GroundPoundEffect_ctor	sets the GroundPoundEffect virtual table; callers 1a5030,24aaf0,2c2440
+002c7808	GroundPoundEffect_run	GameObject slot 4: once per simulated frame
+002c843c	groundPound_staticInit	static initialiser, attributed by position to the SkillGroundPound source file; registers particle type descriptors through 0x18f3d0
+002c8740	groundPound_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002c8760	SkillCharge_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002c87cc	SkillCharge_initStats	Skill slot 9: writes the per-level statistic tables
+002c8864	SkillCharge_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002c8914	SkillCharge_describeRank	Skill slot 4: builds the per-rank description text
+002c8c80	SkillCharge_manaCost	Skill slot 5: mana cost for a level (float)
+002c8cb4	SpellCharge_ctor	sets the SpellCharge virtual table; callers 2c8864
+002c8f2c	SpellCharge_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+002c95a4	SpellCharge_getStat3Scaled	returns skill statistic 3 at the spell's level times 0.016; caller is the player move function 0x1b4020
+002c9c54	SpellCharge_dtor	Spell slot 1: destructor (bit 0 of arg frees)
+002c9d20	charge_staticInit	static initialiser, attributed by position to the SkillCharge source file; registers particle type descriptors through 0x18f3d0
+002c9e90	charge_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002c9eb0	DiseaseBolt_ctor	sets the DiseaseBolt virtual table; callers 298d18,2cb1c0
+002ca09c	DiseaseBolt_draw	GameObject slot 5
+002cb0e0	SkillDiseaseBolt_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002cb14c	SkillDiseaseBolt_initStats	Skill slot 9: writes the per-level statistic tables
+002cb1c0	SkillDiseaseBolt_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002cb264	SkillDiseaseBolt_describeRank	Skill slot 4: builds the per-rank description text
+002cb33c	SkillDiseaseBolt_manaCost	Skill slot 5: mana cost for a level (float)
+002cb368	SkillDiseaseBolt_canUse	Skill slot 1: may this caster use it now
+002cb370	diseaseBolt_staticInit	static initialiser, attributed by position to the SkillDiseaseBolt source file; registers particle type descriptors through 0x18f3d0
+002cb4c8	diseaseBolt_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002cb4e8	DiseaseTrail_ctor	sets the DiseaseTrail virtual table; callers 2cc080,2cc248
+002cb65c	DiseaseTrail_run	GameObject slot 4: once per simulated frame
+002cc080	SpellDiseaseTrail_ctor	sets the SpellDiseaseTrail virtual table; callers 2ccba0
+002cc248	SpellDiseaseTrail_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+002ccaf8	SkillDiseaseTrail_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002ccb64	SkillDiseaseTrail_initStats	Skill slot 9: writes the per-level statistic tables
+002ccba0	SkillDiseaseTrail_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002ccc3c	SkillDiseaseTrail_describeRank	Skill slot 4: builds the per-rank description text
+002ccdfc	SkillDiseaseTrail_manaCost	Skill slot 5: mana cost for a level (float)
+002cce28	SkillDiseaseTrail_canUse	Skill slot 1: may this caster use it now
+002cce5c	diseaseTrail_staticInit	static initialiser, attributed by position to the SkillDiseaseTrail source file; registers particle type descriptors through 0x18f3d0
+002ccfa8	diseaseTrail_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002ccfc8	SpellDiseaseShield_ctor	sets the SpellDiseaseShield virtual table; callers 298d18,2cdff8
+002cd318	SpellDiseaseShield_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+002cdef8	SkillDiseaseShield_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002cdf64	SkillDiseaseShield_initStats	Skill slot 9: writes the per-level statistic tables
+002cdff8	SkillDiseaseShield_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002ce090	SkillDiseaseShield_describeRank	Skill slot 4: builds the per-rank description text
+002ce284	SkillDiseaseShield_manaCost	Skill slot 5: mana cost for a level (float)
+002ce2b0	SkillDiseaseShield_canUse	Skill slot 1: may this caster use it now
+002ce2e4	diseaseShield_staticInit	static initialiser, attributed by position to the SkillDiseaseShield source file; registers particle type descriptors through 0x18f3d0
+002ce3d8	diseaseShield_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002ce3f8	DiseaseCorpse_ctor	sets the DiseaseCorpse virtual table; callers 
+002ce4a4	DiseaseCorpse_run	GameObject slot 4: once per simulated frame
+002ce610	DiseaseCloud_ctor	sets the DiseaseCloud virtual table; callers 2ce4a4
+002ce6e0	DiseaseCloud_run	GameObject slot 4: once per simulated frame
+002cef7c	diseaseCorpse_staticInit	static initialiser, attributed by position to the DiseaseCorpse source file; registers particle type descriptors through 0x18f3d0
+002cf0c4	diseaseCorpse_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002cf0e4	SkillDarkness_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002cf150	SkillDarkness_initStats	Skill slot 9: writes the per-level statistic tables
+002cf1e0	SkillDarkness_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002cf320	SkillDarkness_describeRank	Skill slot 4: builds the per-rank description text
+002cf42c	SkillDarkness_manaCost	Skill slot 5: mana cost for a level (float)
+002cf460	DarknessProjectile_ctor	sets the DarknessProjectile virtual table; callers 2cf1e0
+002cf690	DarknessProjectile_run	GameObject slot 4: once per simulated frame
+002cfd8c	darkness_staticInit	static initialiser, attributed by position to the SkillDarkness source file; registers particle type descriptors through 0x18f3d0
+002cfe14	darkness_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002cfe34	SkillConvertEnemy_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002cfeac	SkillConvertEnemy_initStats	Skill slot 9: writes the per-level statistic tables
+002cff1c	SkillConvertEnemy_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002cffb8	SkillConvertEnemy_canUse	Skill slot 1: may this caster use it now
+002d001c	SkillConvertEnemy_describeRank	Skill slot 4: builds the per-rank description text
+002d0120	SkillConvertEnemy_manaCost	Skill slot 5: mana cost for a level (float)
+002d0154	SpellConvertEnemy_ctor	sets the SpellConvertEnemy virtual table; callers 2cff1c
+002d0354	SpellConvertEnemy_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+002d0820	convertEnemy_staticInit	static initialiser, attributed by position to the SkillConvertEnemy source file; registers particle type descriptors through 0x18f3d0
+002d08b0	convertEnemy_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002d08d0	SkillConvertUndead_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002d0948	SkillConvertUndead_initStats	Skill slot 9: writes the per-level statistic tables
+002d09bc	SkillConvertUndead_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002d0a58	SkillConvertUndead_canUse	Skill slot 1: may this caster use it now
+002d0b88	SkillConvertUndead_describeRank	Skill slot 4: builds the per-rank description text
+002d0c8c	SkillConvertUndead_manaCost	Skill slot 5: mana cost for a level (float)
+002d0cc0	SpellConvertUndead_ctor	sets the SpellConvertUndead virtual table; callers 2d09bc
+002d0edc	SpellConvertUndead_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+002d133c	convertUndead_staticInit	static initialiser, attributed by position to the SkillConvertUndead source file; registers particle type descriptors through 0x18f3d0
+002d13cc	convertUndead_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002d13ec	SkillCyclone_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002d1484	SkillCyclone_canUse	Skill slot 1: may this caster use it now
+002d1510	SkillCyclone_initStats	Skill slot 9: writes the per-level statistic tables
+002d161c	SkillCyclone_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002d16a0	SkillCyclone_describeRank	Skill slot 4: builds the per-rank description text
+002d1794	SkillCyclone_manaCost	Skill slot 5: mana cost for a level (float)
+002d17c8	SpellCyclone_ctor	sets the SpellCyclone virtual table; callers 2d161c
+002d1a94	SpellCyclone_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+002d272c	cyclone_staticInit	static initialiser, attributed by position to the SkillCyclone source file; registers particle type descriptors through 0x18f3d0
+002d2830	cyclone_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002d2850	SkillHarmTouch_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002d28cc	SkillHarmTouch_initStats	Skill slot 9: writes the per-level statistic tables
+002d2950	SkillHarmTouch_manaCost	Skill slot 5: mana cost for a level (float)
+002d2984	SkillHarmTouch_canUse	Skill slot 1: may this caster use it now
+002d2a04	SkillHarmTouch_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002d2a88	SkillHarmTouch_describeRank	Skill slot 4: builds the per-rank description text
+002d2b5c	SpellHarmTouch_ctor	sets the SpellHarmTouch virtual table; callers 2d2a04
+002d2c0c	SpellHarmTouch_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+002d3060	harmTouch_staticInit	static initialiser, attributed by position to the SkillHarmTouch source file; registers particle type descriptors through 0x18f3d0
+002d3164	harmTouch_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002d3184	FireStormFlare_ctor	sets the FireStormFlare virtual table; callers 2d470c
+002d3290	FireStormFlare_draw	GameObject slot 5
+002d4048	FireStorm_ctor2	sets the FireStorm virtual table; callers 25f988
+002d41f8	FireStorm_ctor	sets the FireStorm virtual table; callers 25e17c,298d18,2d4f7c
+002d4480	FireStorm_initCommon	body shared by both FireStorm constructors: light effect, looping sound
+002d4664	FireStorm_dtor	GameObject slot 1
+002d4e88	SkillFireStorm_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002d4ef4	SkillFireStorm_initStats	Skill slot 9: writes the per-level statistic tables
+002d4f7c	SkillFireStorm_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002d510c	SkillFireStorm_describeRank	Skill slot 4: builds the per-rank description text
+002d5300	SkillFireStorm_manaCost	Skill slot 5: mana cost for a level (float)
+002d532c	SkillFireStorm_canUse	Skill slot 1: may this caster use it now
+002d542c	fireStorm_staticInit	static initialiser, attributed by position to the SkillFireStorm source file; registers particle type descriptors through 0x18f3d0
+002d5574	fireStorm_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002d5594	SpellDiseaseEffect_ctor	sets the SpellDiseaseEffect virtual table; callers 1e8230,248598,2d5854
+002d5854	SpellDiseaseEffect_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+002d5ec0	SkillFireArrow_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002d5f34	SkillFireArrow_initStats	Skill slot 9: writes the per-level statistic tables
+002d5fc4	SkillFireArrow_canUse	Skill slot 1: may this caster use it now
+002d603c	SkillFireArrow_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002d6108	SkillFireArrow_describeRank	Skill slot 4: builds the per-rank description text
+002d6204	SkillFireArrow_manaCost	Skill slot 5: mana cost for a level (float)
+002d6238	FireArrowProjectile_ctor	sets the FireArrowProjectile virtual table; callers 2a6864,2d603c
+002d6440	FireArrowProjectile_ctor2	sets the FireArrowProjectile virtual table; callers 25bbe4,26b27c,26e4c4,2a1848
+002d66ac	FireArrowProjectile_run	GameObject slot 4: once per simulated frame
+002d67e8	FireArrowProjectile_draw	GameObject slot 5
+002d685c	FireArrowProjectile_onHit	GameObject slot 6: called by obj_moveAndCollide when something is touched
+002d6c20	SkillColdArrow_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002d6c94	SkillColdArrow_initStats	Skill slot 9: writes the per-level statistic tables
+002d6d40	SkillColdArrow_canUse	Skill slot 1: may this caster use it now
+002d6db8	SkillColdArrow_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002d6e84	SkillColdArrow_describeRank	Skill slot 4: builds the per-rank description text
+002d6f80	SkillColdArrow_manaCost	Skill slot 5: mana cost for a level (float)
+002d6fb4	ColdArrowProjectile_ctor	sets the ColdArrowProjectile virtual table; callers 2a6864,2d6db8
+002d718c	ColdArrowProjectile_ctor2	sets the ColdArrowProjectile virtual table; callers 25bbe4,264314,26b27c,26e4c4,2a1848
+002d73c8	ColdArrowProjectile_run	GameObject slot 4: once per simulated frame
+002d7980	ColdArrowProjectile_draw	GameObject slot 5
+002d7aac	ColdArrowProjectile_onHit	GameObject slot 6: called by obj_moveAndCollide when something is touched
+002d84cc	coldArrow_staticInit	static initialiser, attributed by position to the SkillColdArrow source file; registers particle type descriptors through 0x18f3d0
+002d863c	coldArrow_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002d865c	SkillPoisonArrow_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002d86d0	SkillPoisonArrow_initStats	Skill slot 9: writes the per-level statistic tables
+002d877c	SkillPoisonArrow_canUse	Skill slot 1: may this caster use it now
+002d87f4	SkillPoisonArrow_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002d88c0	SkillPoisonArrow_describeRank	Skill slot 4: builds the per-rank description text
+002d8a30	SkillPoisonArrow_manaCost	Skill slot 5: mana cost for a level (float)
+002d8a64	PoisonArrowProjectile_ctor	sets the PoisonArrowProjectile virtual table; callers 2d87f4
+002d8c40	PoisonArrowProjectile_ctor2	sets the PoisonArrowProjectile virtual table; callers 25bbe4,264314
+002d8e80	PoisonArrowProjectile_run	GameObject slot 4: once per simulated frame
+002d91f8	PoisonArrowProjectile_draw	GameObject slot 5
+002d932c	PoisonArrowProjectile_onHit	GameObject slot 6: called by obj_moveAndCollide when something is touched
+002d9764	poisonArrow_staticInit	static initialiser, attributed by position to the SkillPoisonArrow source file; registers particle type descriptors through 0x18f3d0
+002d98c8	poisonArrow_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002d98e8	SkillMultiFire_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002d995c	SkillMultiFire_initStats	Skill slot 9: writes the per-level statistic tables
+002d9a18	SkillMultiFire_canUse	Skill slot 1: may this caster use it now
+002d9a90	SkillMultiFire_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002da048	SkillMultiFire_describeRank	Skill slot 4: builds the per-rank description text
+002da130	SkillMultiFire_manaCost	Skill slot 5: mana cost for a level (float)
+002da164	MultiFireProjectile_ctor	sets the MultiFireProjectile virtual table; callers 25bbe4
+002da2bc	MultiFireProjectile_run	GameObject slot 4: once per simulated frame
+002da550	MultiFireProjectile_draw	GameObject slot 5
+002da610	MultiFireProjectile_onHit	GameObject slot 6: called by obj_moveAndCollide when something is touched
+002daa4c	multiFire_staticInit	static initialiser, attributed by position to the SkillMultiFire source file; registers particle type descriptors through 0x18f3d0
+002daadc	multiFire_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002daafc	SkillExplodeArrow_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002dab70	SkillExplodeArrow_initStats	Skill slot 9: writes the per-level statistic tables
+002dac30	SkillExplodeArrow_canUse	Skill slot 1: may this caster use it now
+002daca8	SkillExplodeArrow_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002dad68	SkillExplodeArrow_describeRank	Skill slot 4: builds the per-rank description text
+002dae80	SkillExplodeArrow_manaCost	Skill slot 5: mana cost for a level (float)
+002daeb4	ExplodeArrowProjectile_ctor	sets the ExplodeArrowProjectile virtual table; callers 2a6864,2daca8
+002dafe0	ExplodeArrowProjectile_ctor2	sets the ExplodeArrowProjectile virtual table; callers 26b27c,26e4c4,2a1848
+002db17c	ExplodeArrowProjectile_run	GameObject slot 4: once per simulated frame
+002db430	ExplodeArrowProjectile_draw	GameObject slot 5
+002db4f0	ExplodeArrowProjectile_onHit	GameObject slot 6: called by obj_moveAndCollide when something is touched
+002dba94	explodeArrow_staticInit	static initialiser, attributed by position to the SkillExplodeArrow source file; registers particle type descriptors through 0x18f3d0
+002dbb24	explodeArrow_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002dbb44	SkillArchery_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002dbbb8	SkillArchery_initStats	Skill slot 9: writes the per-level statistic tables
+002dbbf0	SkillArchery_describeRank	Skill slot 4: builds the per-rank description text
+002dbc78	SkillArchery_manaCost	Skill slot 5: mana cost for a level (float)
+002dbcac	SkillArchery_getStat0Fraction	statistic 0 at the given level / 100; called by Player_recalcDamage
+002dbd20	FireFlare_ctor	sets the FireFlare virtual table; callers 2dcd40
+002dbe00	FireFlare_draw	GameObject slot 5
+002dbf10	FireFlare_run	GameObject slot 4: once per simulated frame
+002dcd40	SpellFireFlares_ctor	sets the SpellFireFlares virtual table; callers 2dd4e8
+002dd0c8	SpellFireFlares_dtor	Spell slot 1: destructor (bit 0 of arg frees)
+002dd1ac	SpellFireFlares_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+002dd404	SkillFireFlares_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002dd470	SkillFireFlares_initStats	Skill slot 9: writes the per-level statistic tables
+002dd4e8	SkillFireFlares_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002dd570	SkillFireFlares_describeRank	Skill slot 4: builds the per-rank description text
+002dd88c	SkillFireFlares_manaCost	Skill slot 5: mana cost for a level (float)
+002dd8b8	SkillFireFlares_canUse	Skill slot 1: may this caster use it now
+002dd8ec	fireFlares_staticInit	static initialiser, attributed by position to the SkillFireFlares source file; registers particle type descriptors through 0x18f3d0
+002dda34	fireFlares_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002dda54	SkillRiposte_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002ddae4	SkillRiposte_initStats	Skill slot 9: writes the per-level statistic tables
+002ddb90	SkillRiposte_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002ddbb8	SkillRiposte_describeRank	Skill slot 4: builds the per-rank description text
+002ddccc	SkillRiposte_counterAttack	called by the damage function with skill 9 or 82: tint, particles placed with the cosmetic generator, then damage rolled with the shared generator
+002de138	riposte_staticInit	static initialiser, attributed by position to the SkillRiposte source file; registers particle type descriptors through 0x18f3d0
+002de21c	riposte_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002de23c	SkillBash_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002de2a8	SkillBash_initStats	Skill slot 9: writes the per-level statistic tables
+002de334	SkillBash_canUse	Skill slot 1: may this caster use it now
+002de3bc	SkillBash_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002de484	SkillBash_describeRank	Skill slot 4: builds the per-rank description text
+002de60c	SkillBash_manaCost	Skill slot 5: mana cost for a level (float)
+002de640	SpellBash_ctor	sets the SpellBash virtual table; callers 2de3bc
+002de7dc	SpellBash_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+002defcc	SpellBash_getField18	Spell slot 4: returns spell+0x18; Player_run polls it
+002defd4	bash_staticInit	static initialiser, attributed by position to the SkillBash source file; registers particle type descriptors through 0x18f3d0
+002df058	bash_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002df078	SpellBlessed_ctor	sets the SpellBlessed virtual table; callers 2dfeb8
+002df42c	SpellBlessed_dtor	Spell slot 1: destructor (bit 0 of arg frees)
+002df4bc	SpellBlessed_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+002dfdb8	SpellBlessed_getStat0	skill statistic 0 at the spell's level; caller 0x1b3900
+002dfdf0	SkillBlessed_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002dfe5c	SkillBlessed_initStats	Skill slot 9: writes the per-level statistic tables
+002dfeb8	SkillBlessed_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002dff84	SkillBlessed_describeRank	Skill slot 4: builds the per-rank description text
+002e000c	SkillBlessed_canUse	Skill slot 1: may this caster use it now
+002e0040	SkillBlessed_manaCost	Skill slot 5: mana cost for a level (float)
+002e0074	blessed_staticInit	static initialiser, attributed by position to the SkillBlessed source file; registers particle type descriptors through 0x18f3d0
+002e0160	blessed_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002e0180	SkillMinorHealing_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002e01ec	SkillMinorHealing_initStats	Skill slot 9: writes the per-level statistic tables
+002e022c	SkillMinorHealing_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002e02cc	SkillMinorHealing_describeRank	Skill slot 4: builds the per-rank description text
+002e0354	SkillMinorHealing_manaCost	Skill slot 5: mana cost for a level (float)
+002e0388	SpellMinorHealing_ctor	sets the SpellMinorHealing virtual table; callers 2e022c
+002e04f8	SpellMinorHealing_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+002e060c	SkillAncestralCall_canUse	Skill slot 1: may this caster use it now
+002e0640	SkillAncestralCall_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002e06bc	SkillAncestralCall_initStats	Skill slot 9: writes the per-level statistic tables
+002e0750	SkillAncestralCall_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002e07f0	SkillAncestralCall_describeRank	Skill slot 4: builds the per-rank description text
+002e0980	SkillAncestralCall_manaCost	Skill slot 5: mana cost for a level (float)
+002e09b4	SpellAncestralCall_ctor	sets the SpellAncestralCall virtual table; callers 2e0750
+002e0d10	SpellAncestralCall_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+002e13d0	SpellAncestralCall_getStat0Fraction	statistic 0 / 100 at the spell's level
+002e1420	SpellAncestralCall_getStat1Fraction	statistic 1 / 100 at the spell's level
+002e1634	ancestralCall_staticInit	static initialiser, attributed by position to the SkillAncestralCall source file; registers particle type descriptors through 0x18f3d0
+002e16cc	ancestralCall_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002e16ec	SpellSummonSkeleton_ctor	sets the SpellSummonSkeleton virtual table; callers 2e18a4
+002e177c	SpellSummonSkeleton_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+002e17d8	SkillSummonSkeleton_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002e1844	SkillSummonSkeleton_initStats	Skill slot 9: writes the per-level statistic tables
+002e18a4	SkillSummonSkeleton_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002e227c	SkillSummonSkeleton_describeRank	Skill slot 4: builds the per-rank description text
+002e2340	SkillSummonSkeleton_manaCost	Skill slot 5: mana cost for a level (float)
+002e2368	SkillSummonSkeleton_canUse	Skill slot 1: may this caster use it now
+002e23cc	summonSkeleton_staticInit	static initialiser, attributed by position to the SkillSummonSkeleton source file; registers particle type descriptors through 0x18f3d0
+002e24b8	summonSkeleton_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002e24d8	SpellLightningWeapons_ctor	sets the SpellLightningWeapons virtual table; callers 2e3184
+002e2ac4	SpellLightningWeapons_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+002e3070	SkillLightningWeapons_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002e30dc	SkillLightningWeapons_initStats	Skill slot 9: writes the per-level statistic tables
+002e3184	SkillLightningWeapons_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002e3208	SkillLightningWeapons_describeRank	Skill slot 4: builds the per-rank description text
+002e3480	SkillLightningWeapons_manaCost	Skill slot 5: mana cost for a level (float)
+002e34ac	SkillLightningWeapons_canUse	Skill slot 1: may this caster use it now
+002e34e0	SpellFireWeapons_ctor	sets the SpellFireWeapons virtual table; callers 2e4ad0
+002e3a98	SpellFireWeapons_dtor	Spell slot 1: destructor (bit 0 of arg frees)
+002e3b28	SpellFireWeapons_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+002e49c0	SkillFireWeapons_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002e4a2c	SkillFireWeapons_initStats	Skill slot 9: writes the per-level statistic tables
+002e4ad0	SkillFireWeapons_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002e4b54	SkillFireWeapons_describeRank	Skill slot 4: builds the per-rank description text
+002e4dcc	SkillFireWeapons_manaCost	Skill slot 5: mana cost for a level (float)
+002e4df8	SkillFireWeapons_canUse	Skill slot 1: may this caster use it now
+002e4e2c	fireWeapons_staticInit	static initialiser, attributed by position to the SkillFireWeapons source file; registers particle type descriptors through 0x18f3d0
+002e4f74	fireWeapons_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002e4f94	SpellColdWeapons_ctor	sets the SpellColdWeapons virtual table; callers 2e5e44
+002e5578	SpellColdWeapons_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+002e5d2c	SkillColdWeapons_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002e5d98	SkillColdWeapons_initStats	Skill slot 9: writes the per-level statistic tables
+002e5e44	SkillColdWeapons_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002e5ec8	SkillColdWeapons_describeRank	Skill slot 4: builds the per-rank description text
+002e6140	SkillColdWeapons_manaCost	Skill slot 5: mana cost for a level (float)
+002e616c	SkillColdWeapons_canUse	Skill slot 1: may this caster use it now
+002e61a0	coldWeapons_staticInit	static initialiser, attributed by position to the SkillColdWeapons source file; registers particle type descriptors through 0x18f3d0
+002e6294	coldWeapons_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002e62b4	SkillRoot_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002e637c	SkillRoot_initStats	Skill slot 9: writes the per-level statistic tables
+002e6534	SkillRoot_canUse	Skill slot 1: may this caster use it now
+002e6598	SkillRoot_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002e6790	SkillRoot_describeRank	Skill slot 4: builds the per-rank description text
+002e6894	SkillRoot_manaCost	Skill slot 5: mana cost for a level (float)
+002e68c8	SpellRoot_ctor	sets the SpellRoot virtual table; callers 2e6598
+002e699c	SpellRoot_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+002e7034	SpellRoot_dtor	Spell slot 1: destructor (bit 0 of arg frees)
+002e70a8	root_staticInit	static initialiser, attributed by position to the SkillRoot source file; registers particle type descriptors through 0x18f3d0
+002e7204	root_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002e7224	SkillCriticalHit_canUse	Skill slot 1: may this caster use it now
+002e7258	SkillCriticalHit_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002e730c	SkillCriticalHit_initStats	Skill slot 9: writes the per-level statistic tables
+002e74b0	SkillCriticalHit_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002e7534	SkillCriticalHit_describeRank	Skill slot 4: builds the per-rank description text
+002e7690	SkillCriticalHit_manaCost	Skill slot 5: mana cost for a level (float)
+002e7988	SpellCriticalHit_ctor	sets the SpellCriticalHit virtual table; callers 2e74b0
+002e7acc	SpellCriticalHit_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+002e7f58	SpellCriticalHit_setTint	writes the tint fields +0x90..+0x96 of a creature
+002e7f7c	criticalHit_staticInit	static initialiser, attributed by position to the SkillCriticalHit source file; registers particle type descriptors through 0x18f3d0
+002e8014	criticalHit_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002e8034	SkillHolyShield_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002e80a0	SkillHolyShield_initStats	Skill slot 9: writes the per-level statistic tables
+002e80fc	SkillHolyShield_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002e819c	SkillHolyShield_describeRank	Skill slot 4: builds the per-rank description text
+002e82c8	SkillHolyShield_manaCost	Skill slot 5: mana cost for a level (float)
+002e82fc	SpellHolyShield_ctor	sets the SpellHolyShield virtual table; callers 2e80fc
+002e8428	SpellHolyShield_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+002e886c	holyShield_staticInit	static initialiser, attributed by position to the SkillHolyShield source file; registers particle type descriptors through 0x18f3d0
+002e88f4	holyShield_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002e8914	SkillDodge_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002e89a4	SkillDodge_initStats	Skill slot 9: writes the per-level statistic tables
+002e8a00	SkillDodge_describeRank	Skill slot 4: builds the per-rank description text
+002e8a88	SkillDodge_manaCost	Skill slot 5: mana cost for a level (float)
+002e8ac0	SkillDodge_getStat0Fraction	statistic 0 / 100, or 0 when the level is 0; caller 0x152a18
+002e8b3c	SkillHealing_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002e8bcc	SkillHealing_initStats	Skill slot 9: writes the per-level statistic tables
+002e8cf8	SkillHealing_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002e8d98	SkillHealing_describeRank	Skill slot 4: builds the per-rank description text
+002e8e94	SkillHealing_manaCost	Skill slot 5: mana cost for a level (float)
+002e8ec8	SpellHealing_ctor	sets the SpellHealing virtual table; callers 2e8cf8
+002e90b8	SpellHealing_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+002e979c	healing_staticInit	static initialiser, attributed by position to the SkillHealing source file; registers particle type descriptors through 0x18f3d0
+002e9828	healing_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002e9848	SkillConeOfFrost_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002e98bc	SkillConeOfFrost_initStats	Skill slot 9: writes the per-level statistic tables
+002e9930	SkillConeOfFrost_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002e99d0	SkillConeOfFrost_describeRank	Skill slot 4: builds the per-rank description text
+002e9ad4	SkillConeOfFrost_manaCost	Skill slot 5: mana cost for a level (float)
+002e9b08	SpellConeOfFrost_ctor	sets the SpellConeOfFrost virtual table; callers 2e9930
+002e9c90	SpellConeOfFrost_dtor	Spell slot 1: destructor (bit 0 of arg frees)
+002e9d10	SpellConeOfFrost_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+002ea35c	coneOfFrost_staticInit	static initialiser, attributed by position to the SkillConeOfFrost source file; registers particle type descriptors through 0x18f3d0
+002ea4b8	coneOfFrost_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002ea4d8	SpellUndeadShield_ctor	sets the SpellUndeadShield virtual table; callers 2eb7cc
+002ea6a4	SpellUndeadShield_dtor	Spell slot 1: destructor (bit 0 of arg frees)
+002ea74c	SpellUndeadShield_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+002eaec0	SpellUndeadShield_damageAttacker	deals statistic 0 percent of the incoming amount back, spread drawn from the spell's own generator; called by the damage function
+002eb050	SpellSecondaryUndeadShield_ctor	sets the SpellSecondaryUndeadShield virtual table; callers 2ea74c
+002eb0fc	SpellSecondaryUndeadShield_dtor	Spell slot 1: destructor (bit 0 of arg frees)
+002eb170	SpellSecondaryUndeadShield_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+002eb704	SkillUndeadShield_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002eb770	SkillUndeadShield_initStats	Skill slot 9: writes the per-level statistic tables
+002eb7cc	SkillUndeadShield_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002eb850	SkillUndeadShield_describeRank	Skill slot 4: builds the per-rank description text
+002eb944	SkillUndeadShield_manaCost	Skill slot 5: mana cost for a level (float)
+002eb970	SkillUndeadShield_canUse	Skill slot 1: may this caster use it now
+002eb9a4	undeadShield_staticInit	static initialiser, attributed by position to the SkillUndeadShield source file; registers particle type descriptors through 0x18f3d0
+002eba28	undeadShield_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002eba48	HolyStrike_ctor	sets the HolyStrike virtual table; callers 2ecfcc
+002ebc50	HolyStrike_run	GameObject slot 4: once per simulated frame
+002ecae8	HolyStrike_onHit	GameObject slot 6: called by obj_moveAndCollide when something is touched
+002ecd90	HolyStrike_draw	GameObject slot 5
+002ecf08	SkillHolyStrike_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002ecf74	SkillHolyStrike_initStats	Skill slot 9: writes the per-level statistic tables
+002ecfcc	SkillHolyStrike_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002ed08c	SkillHolyStrike_describeRank	Skill slot 4: builds the per-rank description text
+002ed1e4	SkillHolyStrike_manaCost	Skill slot 5: mana cost for a level (float)
+002ed20c	SkillHolyStrike_canUse	Skill slot 1: may this caster use it now
+002ed214	holyStrike_staticInit	static initialiser, attributed by position to the SkillHolyStrike source file; registers particle type descriptors through 0x18f3d0
+002ed36c	holyStrike_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002ed38c	SkillShockOfFire_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002ed3f8	SkillShockOfFire_initStats	Skill slot 9: writes the per-level statistic tables
+002ed4e4	SkillShockOfFire_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002ed6a4	SkillShockOfFire_describeRank	Skill slot 4: builds the per-rank description text
+002ed80c	SkillShockOfFire_manaCost	Skill slot 5: mana cost for a level (float)
+002ed840	SkillFrostStorm_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002ed8ac	SkillFrostStorm_initStats	Skill slot 9: writes the per-level statistic tables
+002ed9a0	SkillFrostStorm_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002edc40	SkillFrostStorm_describeRank	Skill slot 4: builds the per-rank description text
+002edd44	SkillFrostStorm_manaCost	Skill slot 5: mana cost for a level (float)
+002edd78	HammerOfWrath_ctor	sets the HammerOfWrath virtual table; callers 2efb20
+002edfd0	HammerOfWrath_dtor	GameObject slot 1
+002ee068	HammerOfWrath_run	GameObject slot 4: once per simulated frame
+002ef78c	HammerOfWrath_draw	GameObject slot 5
+002ef974	SpellHammerOfWrath_ctor	sets the SpellHammerOfWrath virtual table; callers 2efb20
+002efa04	SpellHammerOfWrath_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+002efa60	SkillHammerOfWrath_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002efacc	SkillHammerOfWrath_initStats	Skill slot 9: writes the per-level statistic tables
+002efb20	SkillHammerOfWrath_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002efd44	SkillHammerOfWrath_describeRank	Skill slot 4: builds the per-rank description text
+002efecc	SkillHammerOfWrath_manaCost	Skill slot 5: mana cost for a level (float)
+002efef8	SkillHammerOfWrath_canUse	Skill slot 1: may this caster use it now
+002eff2c	hammerOfWrath_staticInit	static initialiser, attributed by position to the SkillHammerOfWrath source file; registers particle type descriptors through 0x18f3d0
+002f008c	hammerOfWrath_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002f00ac	SpellConeOfFire_ctor	sets the SpellConeOfFire virtual table; callers 298d18,2f1078
+002f0224	SpellConeOfFire_dtor	Spell slot 1: destructor (bit 0 of arg frees)
+002f02fc	SpellConeOfFire_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+002f0f94	SkillConeOfFire_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002f1008	SkillConeOfFire_initStats	Skill slot 9: writes the per-level statistic tables
+002f1078	SkillConeOfFire_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002f10fc	SkillConeOfFire_describeRank	Skill slot 4: builds the per-rank description text
+002f1210	SkillConeOfFire_manaCost	Skill slot 5: mana cost for a level (float)
+002f123c	SkillConeOfFire_canUse	Skill slot 1: may this caster use it now
+002f1244	coneOfFire_staticInit	static initialiser, attributed by position to the SkillConeOfFire source file; registers particle type descriptors through 0x18f3d0
+002f1388	coneOfFire_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002f13a8	SkillRegeneration_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002f141c	SkillRegeneration_initStats	Skill slot 9: writes the per-level statistic tables
+002f1440	SkillRegeneration_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002f1468	SkillRegeneration_describeRank	Skill slot 4: builds the per-rank description text
+002f14f0	SkillRegeneration_getStat0	statistic 0 at the given level; caller 0x1b3900
+002f1528	SpellWizardBeam_ctor	sets the SpellWizardBeam virtual table; callers 2f3b0c
+002f1a44	SpellWizardBeam_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+002f3928	SpellWizardBeam_dtor	Spell slot 1: destructor (bit 0 of arg frees)
+002f3a2c	SkillWizardBeam_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002f3aa0	SkillWizardBeam_initStats	Skill slot 9: writes the per-level statistic tables
+002f3b0c	SkillWizardBeam_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002f3b90	SkillWizardBeam_describeRank	Skill slot 4: builds the per-rank description text
+002f3da8	SkillWizardBeam_manaCost	Skill slot 5: mana cost for a level (float)
+002f3dd4	wizardBeam_staticInit	static initialiser, attributed by position to the SkillWizardBeam source file; registers particle type descriptors through 0x18f3d0
+002f3f18	wizardBeam_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002f3f38	BlindingLightEffect_ctor	sets the BlindingLightEffect virtual table; callers 2f47dc
+002f42e4	BlindingLightEffect_run	GameObject slot 4: once per simulated frame
+002f4474	SpellBlindingLight_ctor	sets the SpellBlindingLight virtual table; callers 2f3f38
+002f4538	SpellBlindingLight_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+002f46f0	SkillBlindingLight_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002f4768	SkillBlindingLight_initStats	Skill slot 9: writes the per-level statistic tables
+002f47dc	SkillBlindingLight_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002f4970	SkillBlindingLight_describeRank	Skill slot 4: builds the per-rank description text
+002f4ae4	SkillBlindingLight_manaCost	Skill slot 5: mana cost for a level (float)
+002f4b10	SkillBlindingLight_canUse	Skill slot 1: may this caster use it now
+002f4b18	blindingLight_staticInit	static initialiser, attributed by position to the SkillBlindingLight source file; registers particle type descriptors through 0x18f3d0
+002f4c70	blindingLight_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002f4c90	SkillRepulseUndead_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002f4cfc	SkillRepulseUndead_initStats	Skill slot 9: writes the per-level statistic tables
+002f4d34	SkillRepulseUndead_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002f4fe4	SkillRepulseUndead_describeRank	Skill slot 4: builds the per-rank description text
+002f50a8	SkillRepulseUndead_manaCost	Skill slot 5: mana cost for a level (float)
+002f50d0	repulseUndead_staticInit	static initialiser, attributed by position to the SkillRepulseUndead source file; registers particle type descriptors through 0x18f3d0
+002f5228	repulseUndead_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002f5248	DismissUndeadProjectile_ctor	sets the DismissUndeadProjectile virtual table; callers 2f645c
+002f57b0	DismissUndeadProjectile_run	GameObject slot 4: once per simulated frame
+002f5ddc	DismissUndeadProjectile_draw	GameObject slot 5
+002f5fb4	DismissUndeadProjectile_onHit	GameObject slot 6: called by obj_moveAndCollide when something is touched
+002f6398	SkillDismissUndead_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002f6404	SkillDismissUndead_initStats	Skill slot 9: writes the per-level statistic tables
+002f645c	SkillDismissUndead_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002f64ec	SkillDismissUndead_describeRank	Skill slot 4: builds the per-rank description text
+002f6674	SkillDismissUndead_manaCost	Skill slot 5: mana cost for a level (float)
+002f66a0	dismissUndead_staticInit	static initialiser, attributed by position to the SkillDismissUndead source file; registers particle type descriptors through 0x18f3d0
+002f68c0	dismissUndead_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002f68e0	FrostShard_ctor	sets the FrostShard virtual table; callers 2f77c0
+002f6a18	FrostShard_draw	GameObject slot 5
+002f6b3c	FrostShard_run	GameObject slot 4: once per simulated frame
+002f71ac	FrostShard_onHit	GameObject slot 6: called by obj_moveAndCollide when something is touched
+002f7404	ShockOfFrost_ctor	sets the ShockOfFrost virtual table; callers 24c7fc,287db0,298d18,2b5a08
+002f7604	ShockOfFrost_dtor	GameObject slot 1
+002f76a8	ShockOfFrost_draw	GameObject slot 5
+002f77c0	ShockOfFrost_run	GameObject slot 4: once per simulated frame
+002f84e4	ShockOfFrost_onHit	GameObject slot 6: called by obj_moveAndCollide when something is touched
+002f8730	SkillShockOfFrost_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002f879c	SkillShockOfFrost_initStats	Skill slot 9: writes the per-level statistic tables
+002f8840	SkillShockOfFrost_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002f88d0	SkillShockOfFrost_describeRank	Skill slot 4: builds the per-rank description text
+002f8af8	SkillShockOfFrost_manaCost	Skill slot 5: mana cost for a level (float)
+002f8b24	SkillShockOfFrost_canUse	Skill slot 1: may this caster use it now
+002f8b2c	shockOfFrost_staticInit	static initialiser, attributed by position to the SkillShockOfFrost source file; registers particle type descriptors through 0x18f3d0
+002f8c80	shockOfFrost_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002f8ca0	SkillLifeTap_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002f8d14	SkillLifeTap_initStats	Skill slot 9: writes the per-level statistic tables
+002f8d54	SkillLifeTap_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002f8d7c	SkillLifeTap_describeRank	Skill slot 4: builds the per-rank description text
+002f8e40	SkillLifeTap_manaCost	Skill slot 5: mana cost for a level (float)
+002f8e78	SkillLifeTap_getStat0Fraction	statistic 0 / 100; callers 0x110d30 and Player_processDamage
+002f8eec	SkillLifeTap_getStat1	statistic 1 at the given level; caller 0x2946f8
+002f8f48	PoisonRain_ctor	class PoisonRain (0x6c bytes), table at 0x51aa60; callers SkillPoisonRain_cast, Mummy run 0x298d18, Orc run 0x2a1848
+002f9254	PoisonRain_run	GameObject slot 4: once per simulated frame; class PoisonRain, table at 0x51aa60 (vtables.txt merges it into SkillLifeTap)
+002f9958	SkillPoisonRain_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002f99c4	SkillPoisonRain_initStats	Skill slot 9: writes the per-level statistic tables
+002f9a3c	SkillPoisonRain_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002f9bd0	SkillPoisonRain_describeRank	Skill slot 4: builds the per-rank description text
+002f9dc4	SkillPoisonRain_manaCost	Skill slot 5: mana cost for a level (float)
+002f9dec	SkillPoisonRain_canUse	Skill slot 1: may this caster use it now
+002f9df4	poisonRain_staticInit	static initialiser, attributed by position to the SkillPoisonRain source file; registers particle type descriptors through 0x18f3d0
+002f9ee4	poisonRain_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002f9f04	Boat_ctor	sets the Boat virtual table; callers 159c94
+002f9fe8	Boat_vslot28	virtual slot 28 of Boat; meaning not established
+002fa178	Boat_vslot29	virtual slot 29 of Boat; meaning not established
+002fa3f4	SkulBoat_ctor	sets the SkulBoat virtual table; callers 159c94
+002fa4c8	SkulBoat_vslot28	virtual slot 28 of SkulBoat; meaning not established
+002fa658	SkulBoat_vslot29	virtual slot 29 of SkulBoat; meaning not established
+002fa904	SkillShieldBash_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002fa970	SkillShieldBash_initStats	Skill slot 9: writes the per-level statistic tables
+002faa00	SkillShieldBash_canUse	Skill slot 1: may this caster use it now
+002faa88	SkillShieldBash_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002fab28	SkillShieldBash_describeRank	Skill slot 4: builds the per-rank description text
+002facb0	SkillShieldBash_manaCost	Skill slot 5: mana cost for a level (float)
+002face4	SpellShieldBash_ctor	sets the SpellShieldBash virtual table; callers 2faa88
+002fae80	SpellShieldBash_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+002fb67c	SpellShieldBash_getField18	Spell slot 4: returns spell+0x18; Player_run polls it
+002fb684	shieldBash_staticInit	static initialiser, attributed by position to the SkillShieldBash source file; registers particle type descriptors through 0x18f3d0
+002fb708	shieldBash_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002fb728	SpellPlanarSteelEffect_ctor	sets the SpellPlanarSteelEffect virtual table; callers 1466d4
+002fb924	SpellPlanarSteelEffect_dtor	Spell slot 1: destructor (bit 0 of arg frees)
+002fb9b4	SpellPlanarSteelEffect_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+002fc3ac	planarSteelEffect_staticInit	static initialiser, attributed by position to the SpellPlanarSteelEffect source file; registers particle type descriptors through 0x18f3d0
+002fc554	planarSteelEffect_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002fc574	SpellHornOmenEffect_ctor	sets the SpellHornOmenEffect virtual table; callers 146628
+002fc610	SpellHornOmenEffect_dtor	Spell slot 1: destructor (bit 0 of arg frees)
+002fc684	SpellHornOmenEffect_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+002fce8c	hornOmenEffect_staticInit	static initialiser, attributed by position to the SpellHornOmenEffect source file; registers particle type descriptors through 0x18f3d0
+002fcf10	hornOmenEffect_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002fcf30	SkillUnspokenWord_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002fcf9c	SkillUnspokenWord_initStats	Skill slot 9: writes the per-level statistic tables
+002fd030	SkillUnspokenWord_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002fd1dc	SkillUnspokenWord_describeRank	Skill slot 4: builds the per-rank description text
+002fd334	SkillUnspokenWord_manaCost	Skill slot 5: mana cost for a level (float)
+002fd368	SpellUnspokenWord_ctor	sets the SpellUnspokenWord virtual table; callers 2fd030
+002fd550	SpellUnspokenWord_dtor	Spell slot 1: destructor (bit 0 of arg frees)
+002fd5d4	SpellUnspokenWord_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+002fe068	unspokenWord_staticInit	static initialiser, attributed by position to the SkillUnspokenWord source file; registers particle type descriptors through 0x18f3d0
+002fe168	unspokenWord_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002fe188	SkillBerserkerRage_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002fe1fc	SkillBerserkerRage_initStats	Skill slot 9: writes the per-level statistic tables
+002fe23c	SkillBerserkerRage_describeRank	Skill slot 4: builds the per-rank description text
+002fe598	SkillSummonAxe_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002fe604	SkillSummonAxe_initStats	Skill slot 9: writes the per-level statistic tables
+002fe644	SkillSummonAxe_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002fe7f4	SkillSummonAxe_describeRank	Skill slot 4: builds the per-rank description text
+002fe938	SkillSummonAxe_manaCost	Skill slot 5: mana cost for a level (float)
+002feb88	SpellSummonAxe_ctor	sets the SpellSummonAxe virtual table; callers 2fe644
+002feddc	SpellSummonAxe_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+002ff0f4	summonAxe_staticInit	static initialiser, attributed by position to the SkillSummonAxe source file; registers particle type descriptors through 0x18f3d0
+002ff184	summonAxe_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002ff1a4	SkillAxeBandolier_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002ff218	SkillAxeBandolier_initStats	Skill slot 9: writes the per-level statistic tables
+002ff238	SkillAxeBandolier_describeRank	Skill slot 4: builds the per-rank description text
+002ff2e4	SkillAxeBandolier_getStat0Complement	1 - statistic 0 / 100, not below 0; caller 0x1b6338
+002ff374	SkillLightQuiver_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002ff3e8	SkillLightQuiver_initStats	Skill slot 9: writes the per-level statistic tables
+002ff408	SkillLightQuiver_describeRank	Skill slot 4: builds the per-rank description text
+002ff4b4	SkillLightQuiver_getStat0Complement	1 - statistic 0 / 100, not below 0; caller 0x1b6338
+002ff544	SkillSummonArrows_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002ff5b0	SkillSummonArrows_initStats	Skill slot 9: writes the per-level statistic tables
+002ff5ec	SkillSummonArrows_canUse	Skill slot 1: may this caster use it now
+002ff5f4	SkillSummonArrows_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+002ff79c	SkillSummonArrows_describeRank	Skill slot 4: builds the per-rank description text
+002ff848	SkillSummonArrows_manaCost	Skill slot 5: mana cost for a level (float)
+002ff87c	SpellSummonArrows_ctor	sets the SpellSummonArrows virtual table; callers 2ff5f4
+002ffad4	SpellSummonArrows_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+002ffdec	summonArrows_staticInit	static initialiser, attributed by position to the SkillSummonArrows source file; registers particle type descriptors through 0x18f3d0
+002ffe7c	summonArrows_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+002ffe9c	SkillRoar_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+002fff08	SkillRoar_initStats	Skill slot 9: writes the per-level statistic tables
+002fff64	SkillRoar_canUse	Skill slot 1: may this caster use it now
+002fff98	SkillRoar_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+00300038	SkillRoar_describeRank	Skill slot 4: builds the per-rank description text
+00300138	SkillRoar_manaCost	Skill slot 5: mana cost for a level (float)
+0030016c	SpellRoar_ctor	sets the SpellRoar virtual table; callers 2fff98
+003003d8	SpellRoar_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+003010f4	roar_staticInit	static initialiser, attributed by position to the SkillRoar source file; registers particle type descriptors through 0x18f3d0
+00301344	roar_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+00301364	SkillBattleCry_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+003013d0	SkillBattleCry_initStats	Skill slot 9: writes the per-level statistic tables
+00301464	SkillBattleCry_canUse	Skill slot 1: may this caster use it now
+00301498	SkillBattleCry_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+00301538	SkillBattleCry_describeRank	Skill slot 4: builds the per-rank description text
+003016e0	SkillBattleCry_manaCost	Skill slot 5: mana cost for a level (float)
+00301714	SpellBattleCry_ctor	sets the SpellBattleCry virtual table; callers 301498
+00301a34	SpellBattleCry_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+00302bd0	SpellBattleCry_setTint	writes the tint fields +0x90..+0x9e of a creature
+00302d3c	battleCry_staticInit	static initialiser, attributed by position to the SkillBattleCry source file; registers particle type descriptors through 0x18f3d0
+00302f0c	battleCry_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+00302f2c	SkillBloodLust_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+00302f98	SkillBloodLust_initStats	Skill slot 9: writes the per-level statistic tables
+0030300c	SkillBloodLust_canUse	Skill slot 1: may this caster use it now
+00303040	SkillBloodLust_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+00303108	SkillBloodLust_describeRank	Skill slot 4: builds the per-rank description text
+00303220	SkillBloodLust_manaCost	Skill slot 5: mana cost for a level (float)
+00303254	SpellBloodLust_ctor	sets the SpellBloodLust virtual table; callers 303040
+003034dc	SpellBloodLust_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+003047b0	SpellBloodLust_getStat2Complement	1 - statistic 2 / 100 while spell+0x2c is set, else 1; called by the damage function 0x1e8230
+0030481c	SpellBloodLust_getStat1Multiplier	1 + statistic 1 / 100 while spell+0x2c is set, else 1; called by Player_recalcDamage
+00304888	bloodLust_staticInit	static initialiser, attributed by position to the SkillBloodLust source file; registers particle type descriptors through 0x18f3d0
+003049f0	bloodLust_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+00304a10	SkillThrowing_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+00304a84	SkillThrowing_initStats	Skill slot 9: writes the per-level statistic tables
+00304aa8	SkillThrowing_describeRank	Skill slot 4: builds the per-rank description text
+00304b54	SkillThrowing_getStat0Fraction	statistic 0 / 100; called by Player_recalcDamage
+00304c4c	arena_init	registers run task "arena" (0x306b78, priority 100) and draw task "arenaDraw" (0x307284); allocates the spawn-position and monster tables
+00304f5c	arena_begin	caller 0x1e55c0
+00304fb0	arena_shutdown	removes both arena tasks
+003050a4	arena_pickSpawnPoint	offline uses the camera focus to prefer nearby points; net games draw from the shared generator instead
+00305580	arena_onPlayerKilled	called by Player_processDamage; returns at once when the player table entry is the prediction copy (flag 0x20000)
+00305650	arena_loseLife	decrements the slot's life counter; same prediction-copy test
+003056cc	arena_addKill	credits a kill to a player, or to the owner index at creature+0x5a of a summoned pet
+00305784	arena_respawnPlayer	called by game_checkAllDead; refills hp and mana; the screen effect 0x322954 only for the local slot
+00305904	arena_drawHud	called from hud_netStatusDraw
+00305bbc	SpellArena_run	Spell slot 2 of SpellArena
+00305e9c	arena_nextWave	caller arena_runTask
+00305ed4	arena_startWave	sets the difficulty scale 0x4f714c, restores players, spawns the wave, attaches a SpellArena to each monster
+00306b78	arena_runTask	run task "arena"
+00307284	arena_drawTask	draw task "arenaDraw"; writes only the prompt fade value 0x8e735c
+00308284	arena_staticInit	static initialiser, attributed by position to the arena source file; registers particle type descriptors through 0x18f3d0
+0030837c	arena_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+0030839c	SkillStrongStance_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+00308410	SkillStrongStance_initStats	Skill slot 9: writes the per-level statistic tables
+00308434	SkillStrongStance_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+0030845c	SkillStrongStance_describeRank	Skill slot 4: builds the per-rank description text
+003084e4	SkillStrongStance_manaCost	Skill slot 5: mana cost for a level (float)
+0030851c	SkillStrongStance_getStat0	statistic 0 at the given level; called by Player_processDamage
+00308578	SkillStrongStance_trigger	called by Player_processDamage: light effect, 25 particles (generators 0x404468 and cosmetic), then a 0x3d8-byte object via 0x1618d4
+003088b8	strongStance_staticInit	static initialiser, attributed by position to the SkillStrongStance source file; registers particle type descriptors through 0x18f3d0
+0030893c	strongStance_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+0030895c	SkillNaturalResistance_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+003089d0	SkillNaturalResistance_initStats	Skill slot 9: writes the per-level statistic tables
+003089f4	SkillNaturalResistance_describeRank	Skill slot 4: builds the per-rank description text
+00308a7c	SkillNaturalResistance_getStat0Fraction	statistic 0 / 100; caller 0x1b5790
+00308af0	SkillStunningStrike_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+00308b64	SkillStunningStrike_initStats	Skill slot 9: writes the per-level statistic tables
+00308b88	SkillStunningStrike_describeRank	Skill slot 4: builds the per-rank description text
+00308c10	SkillStunningStrike_getStat0ForTarget	statistic 0 for a creature target, capped by the target's rank (0x10d940); 0 in PvP mode A
+00308cb4	SkillStunningStrike_spawnEffect	called by the damage function: light effect and stun-strike animation effect
+00308e64	SkillGiantGrowth_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+00308ed0	SkillGiantGrowth_initStats	Skill slot 9: writes the per-level statistic tables
+00308f2c	SkillGiantGrowth_canUse	Skill slot 1: may this caster use it now
+00308f60	SkillGiantGrowth_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+00309014	SkillGiantGrowth_describeRank	Skill slot 4: builds the per-rank description text
+0030909c	SkillGiantGrowth_manaCost	Skill slot 5: mana cost for a level (float)
+003090d0	SpellGiantGrowth_ctor	sets the SpellGiantGrowth virtual table; callers 308f60
+00309368	SpellGiantGrowth_dtor	Spell slot 1: destructor (bit 0 of arg frees)
+00309420	SpellGiantGrowth_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+003098c8	SpellGiantGrowth_getOwnerField0dc	returns owner+0xdc; called by Player_recalcDamage
+003098d4	giantGrowth_staticInit	static initialiser, attributed by position to the SkillGiantGrowth source file; registers particle type descriptors through 0x18f3d0
+00309958	giantGrowth_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+00309978	SkillPlanarWind_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+003099e4	SkillPlanarWind_initStats	Skill slot 9: writes the per-level statistic tables
+00309acc	SkillPlanarWind_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+00309b70	SkillPlanarWind_describeRank	Skill slot 4: builds the per-rank description text
+00309cd8	SkillPlanarWind_manaCost	Skill slot 5: mana cost for a level (float)
+00309d0c	SpellPlanarWind_ctor	sets the SpellPlanarWind virtual table; callers 309acc
+0030a0b0	SpellPlanarWind_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+0030a7f4	planarWind_staticInit	static initialiser, attributed by position to the SkillPlanarWind source file; registers particle type descriptors through 0x18f3d0
+0030a938	planarWind_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+0030a958	SkillPusStorm_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+0030a9c4	SkillPusStorm_initStats	Skill slot 9: writes the per-level statistic tables
+0030aaa8	SkillPusStorm_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+0030ae10	SkillPusStorm_describeRank	Skill slot 4: builds the per-rank description text
+0030af38	SkillPusStorm_manaCost	Skill slot 5: mana cost for a level (float)
+0030af6c	PusStorm_ctor	sets the PusStorm virtual table; callers 30aaa8
+0030b398	PusStorm_dtor	GameObject slot 1
+0030b428	PusStorm_run	GameObject slot 4: once per simulated frame
+0030bb38	Pustule_ctor	sets the Pustule virtual table; callers 30b428
+0030bc88	Pustule_draw	GameObject slot 5
+0030bde0	Pustule_run	GameObject slot 4: once per simulated frame
+0030c4ac	pusStorm_staticInit	static initialiser, attributed by position to the SkillPusStorm source file; registers particle type descriptors through 0x18f3d0
+0030c5b8	pusStorm_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+0030c5d8	SkillTagarsInsects_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+0030c644	SkillTagarsInsects_initStats	Skill slot 9: writes the per-level statistic tables
+0030c700	SkillTagarsInsects_canUse	Skill slot 1: may this caster use it now
+0030c708	SkillTagarsInsects_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+0030c7d0	SkillTagarsInsects_describeRank	Skill slot 4: builds the per-rank description text
+0030c928	SkillTagarsInsects_manaCost	Skill slot 5: mana cost for a level (float)
+0030c95c	SpellTagarsInsects_ctor	sets the SpellTagarsInsects virtual table; callers 30c708
+0030caa4	SpellTagarsInsects_dtor	Spell slot 1: destructor (bit 0 of arg frees)
+0030db9c	SpellTagarsInsects_isValidTarget	not dead or hidden (flags 9), an enemy of the owner, and optionally not already tagged by this owner (creature_findSpell id 0x57)
+0030dc30	tagarsInsects_staticInit	static initialiser, attributed by position to the SkillTagarsInsects source file; registers particle type descriptors through 0x18f3d0
+0030ddc4	tagarsInsects_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+0030dde4	getretmips_unwind	asserts name getretmips.c; four callers in the engine and library code
+0030e0f0	SkillDrowsy_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+0030e15c	SkillDrowsy_initStats	Skill slot 9: writes the per-level statistic tables
+0030e1f0	SkillDrowsy_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+0030e4c4	SkillDrowsy_describeRank	Skill slot 4: builds the per-rank description text
+0030e5ec	SkillDrowsy_manaCost	Skill slot 5: mana cost for a level (float)
+0030e620	SpellDrowsy_ctor	sets the SpellDrowsy virtual table; callers 30e1f0
+0030e6f0	SpellDrowsy_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+0030ed24	SpellDrowsy_draw	Spell slot 3: called from Creature_draw
+0030ef08	SpellDrowsy_getStat3Fraction	statistic 3 / 100 at the spell's level; nine creature movement/animation callers
+0030ef58	drowsy_staticInit	static initialiser, attributed by position to the SkillDrowsy source file; registers particle type descriptors through 0x18f3d0
+0030f04c	drowsy_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+0030f06c	SkillPoisonBolt_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+0030f0d8	SkillPoisonBolt_initStats	Skill slot 9: writes the per-level statistic tables
+0030f168	SkillPoisonBolt_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+0030f23c	SkillPoisonBolt_describeRank	Skill slot 4: builds the per-rank description text
+0030f364	SkillPoisonBolt_manaCost	Skill slot 5: mana cost for a level (float)
+0030f398	PoisonBolt_ctor	sets the PoisonBolt virtual table; callers 30f168
+0030f608	PoisonBolt_dtor	GameObject slot 1
+0030f6b4	PoisonBolt_draw	GameObject slot 5
+0030f800	PoisonBolt_run	GameObject slot 4: once per simulated frame
+00310028	PoisonBolt_onHit	GameObject slot 6: called by obj_moveAndCollide when something is touched
+00310440	poisonBolt_staticInit	static initialiser, attributed by position to the SkillPoisonBolt source file; registers particle type descriptors through 0x18f3d0
+003105c0	poisonBolt_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+003105e0	SkillSummonBadger_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+0031064c	SkillSummonBadger_initStats	Skill slot 9: writes the per-level statistic tables
+00310690	SkillSummonBadger_canUse	Skill slot 1: may this caster use it now
+003106f4	SkillSummonBadger_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+00310b5c	SkillSummonBadger_describeRank	Skill slot 4: builds the per-rank description text
+00310c08	SkillSummonBadger_manaCost	Skill slot 5: mana cost for a level (float)
+00310c3c	SpellSummonBadger_ctor	sets the SpellSummonBadger virtual table; callers 3106f4
+00310cd0	SpellSummonBadger_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+00311034	SpellSummonBadger_draw	Spell slot 3: called from Creature_draw
+003111d4	summonBadger_staticInit	static initialiser, attributed by position to the SkillSummonBadger source file; registers particle type descriptors through 0x18f3d0
+0031125c	summonBadger_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+0031127c	SkillShadowStep_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+003112e8	SkillShadowStep_initStats	Skill slot 9: writes the per-level statistic tables
+00311340	SkillShadowStep_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+003113e0	SkillShadowStep_describeRank	Skill slot 4: builds the per-rank description text
+00311604	SkillShadowStep_manaCost	Skill slot 5: mana cost for a level (float)
+00311638	SpellShadowStep_ctor	sets the SpellShadowStep virtual table; callers 311340
+00311da0	SpellShadowStep_dtor	Spell slot 1: destructor (bit 0 of arg frees)
+00311e3c	SpellShadowStep_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+00311fc8	shadowStep_staticInit	static initialiser, attributed by position to the SkillShadowStep source file; registers particle type descriptors through 0x18f3d0
+0031204c	shadowStep_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+0031206c	SkillResurrect_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+003120d8	SkillResurrect_initStats	Skill slot 9: writes the per-level statistic tables
+00312168	SkillResurrect_canUse	Skill slot 1: may this caster use it now
+003123e4	SkillResurrect_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+00312500	SkillResurrect_describeExtra	Skill slot 6: alternative description text; returns 1 if it wrote one
+0031256c	SkillResurrect_describeRank	Skill slot 4: builds the per-rank description text
+003126d8	SkillResurrect_manaCost	Skill slot 5: mana cost for a level (float)
+003127b4	SpellResurrect_ctor	sets the SpellResurrect virtual table; callers 3123e4
+00312a70	SpellResurrect_dtor	Spell slot 1: destructor (bit 0 of arg frees)
+00312b30	SpellResurrect_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+00312f48	SpellResurrect_draw	Spell slot 3: called from Creature_draw
+003132c4	resurrect_staticInit	static initialiser, attributed by position to the SkillResurrect source file; registers particle type descriptors through 0x18f3d0
+003133ac	resurrect_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+003133cc	SkillRaiseArmy_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+00313438	SkillRaiseArmy_initStats	Skill slot 9: writes the per-level statistic tables
+003134b0	SkillRaiseArmy_canUse	Skill slot 1: may this caster use it now
+003134e4	SkillRaiseArmy_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+0031368c	SkillRaiseArmy_describeRank	Skill slot 4: builds the per-rank description text
+003137a4	SkillRaiseArmy_manaCost	Skill slot 5: mana cost for a level (float)
+003137d8	SpellRaiseArmy_ctor	sets the SpellRaiseArmy virtual table; callers 3134e4
+0031399c	SpellRaiseArmy_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+00314144	raiseArmy_staticInit	static initialiser, attributed by position to the SkillRaiseArmy source file; registers particle type descriptors through 0x18f3d0
+003141d4	raiseArmy_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+003141f4	SkillRetribution_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+00314260	SkillRetribution_initStats	Skill slot 9: writes the per-level statistic tables
+003142bc	SkillRetribution_canUse	Skill slot 1: may this caster use it now
+003142f0	SkillRetribution_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+00314390	SkillRetribution_describeRank	Skill slot 4: builds the per-rank description text
+00314454	SkillRetribution_manaCost	Skill slot 5: mana cost for a level (float)
+00314488	SpellRetribution_ctor	sets the SpellRetribution virtual table; callers 3142f0
+00314618	SpellRetribution_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+00314790	SpellRetribution_healOwner	tints the owner and, when the owner is a player, adds damage x statistic 1 / 100 to the player's hit points; called by the damage function
+00314888	retribution_staticInit	static initialiser, attributed by position to the SkillRetribution source file; registers particle type descriptors through 0x18f3d0
+00314914	retribution_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+00314934	SkillBattleMage_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+003149a8	SkillBattleMage_initStats	Skill slot 9: writes the per-level statistic tables
+003149cc	SkillBattleMage_describeRank	Skill slot 4: builds the per-rank description text
+00314a78	SkillBattleMage_getStat0Fraction	statistic 0 / 100; called by Player_recalcDamage
+00314aec	SkillPenetratingArrows_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+00314b60	SkillPenetratingArrows_initStats	Skill slot 9: writes the per-level statistic tables
+00314ba0	SkillPenetratingArrows_describeRank	Skill slot 4: builds the per-rank description text
+00314c88	SkillPenetratingArrows_getStats01Fraction	writes statistics 0 and 1 / 100 to two floats; caller 0x152a18
+00314d40	SkillSpiritShield_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+00314dac	SkillSpiritShield_initStats	Skill slot 9: writes the per-level statistic tables
+00314e1c	SkillSpiritShield_canUse	Skill slot 1: may this caster use it now
+00314e50	SkillSpiritShield_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+00314ef0	SkillSpiritShield_describeRank	Skill slot 4: builds the per-rank description text
+00314fd8	SkillSpiritShield_manaCost	Skill slot 5: mana cost for a level (float)
+0031500c	SpellSpiritShield_ctor	sets the SpellSpiritShield virtual table; callers 314e50
+003151b4	SpellSpiritShield_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+00315888	SpellSpiritShield_playHitEffect	called by the damage function; plays spel_is_spirithit
+003159d8	spiritShield_staticInit	static initialiser, attributed by position to the SkillSpiritShield source file; registers particle type descriptors through 0x18f3d0
+00315a6c	spiritShield_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+00315a8c	SkillPoisonWeapons_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+00315af8	SkillPoisonWeapons_initStats	Skill slot 9: writes the per-level statistic tables
+00315bb0	SkillPoisonWeapons_canUse	Skill slot 1: may this caster use it now
+00315be4	SkillPoisonWeapons_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+00315c84	SkillPoisonWeapons_describeRank	Skill slot 4: builds the per-rank description text
+00315f20	SkillPoisonWeapons_manaCost	Skill slot 5: mana cost for a level (float)
+00315f54	SpellPoisonWeapons_ctor	sets the SpellPoisonWeapons virtual table; callers 315be4
+003164fc	SpellPoisonWeapons_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+00316a24	SkillWaveOfFlame_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+00316a90	SkillWaveOfFlame_initStats	Skill slot 9: writes the per-level statistic tables
+00316b1c	SkillWaveOfFlame_canUse	Skill slot 1: may this caster use it now
+00316b24	SkillWaveOfFlame_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+00316bdc	SkillWaveOfFlame_describeRank	Skill slot 4: builds the per-rank description text
+00316cdc	SkillWaveOfFlame_manaCost	Skill slot 5: mana cost for a level (float)
+00316d10	SpellWaveOfFlame_ctor	sets the SpellWaveOfFlame virtual table; callers 316b24
+00317000	SpellWaveOfFlame_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+00317868	waveOfFlame_staticInit	static initialiser, attributed by position to the SkillWaveOfFlame source file; registers particle type descriptors through 0x18f3d0
+003179d4	waveOfFlame_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+003179f4	SkillFrostArmor_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+00317a60	SkillFrostArmor_initStats	Skill slot 9: writes the per-level statistic tables
+00317afc	SkillFrostArmor_canUse	Skill slot 1: may this caster use it now
+00317b30	SkillFrostArmor_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+00317bd0	SkillFrostArmor_describeRank	Skill slot 4: builds the per-rank description text
+00317ce8	SkillFrostArmor_manaCost	Skill slot 5: mana cost for a level (float)
+00317d1c	SpellFrostArmor_ctor	sets the SpellFrostArmor virtual table; callers 317b30
+00317ec0	SpellFrostArmor_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+003184ec	frostArmor_staticInit	static initialiser, attributed by position to the SkillFrostArmor source file; registers particle type descriptors through 0x18f3d0
+003185f0	frostArmor_staticInitThunk	compiler-generated global constructor entry; calls the function above with (1, 0xffff)
+00318610	SkillDiseaseBlade_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+0031867c	SkillDiseaseBlade_initStats	Skill slot 9: writes the per-level statistic tables
+00318730	SkillDiseaseBlade_canUse	Skill slot 1: may this caster use it now
+00318764	SkillDiseaseBlade_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+00318804	SkillDiseaseBlade_describeRank	Skill slot 4: builds the per-rank description text
+00318aa0	SkillDiseaseBlade_manaCost	Skill slot 5: mana cost for a level (float)
+00318ad4	SpellDiseaseBlade_ctor	sets the SpellDiseaseBlade virtual table; callers 318764
+00319068	SpellDiseaseBlade_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+00319598	SkillFireAxe_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+003196b4	SkillFireAxe_initStats	Skill slot 9: writes the per-level statistic tables
+00319710	SkillFireAxe_canUse	Skill slot 1: may this caster use it now
+0031979c	SkillFireAxe_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+00319db0	SkillFireAxe_describeRank	Skill slot 4: builds the per-rank description text
+00319ea0	SkillFireAxe_manaCost	Skill slot 5: mana cost for a level (float)
+00319ed4	SkillColdAxe_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+00319ff0	SkillColdAxe_initStats	Skill slot 9: writes the per-level statistic tables
+0031a04c	SkillColdAxe_canUse	Skill slot 1: may this caster use it now
+0031a0d8	SkillColdAxe_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+0031a6e4	SkillColdAxe_describeRank	Skill slot 4: builds the per-rank description text
+0031a7d4	SkillColdAxe_manaCost	Skill slot 5: mana cost for a level (float)
+0031a808	SkillLightningStrike_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+0031a874	SkillLightningStrike_initStats	Skill slot 9: writes the per-level statistic tables
+0031a920	SkillLightningStrike_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+0031acec	SkillLightningStrike_describeRank	Skill slot 4: builds the per-rank description text
+0031ae14	SkillLightningStrike_manaCost	Skill slot 5: mana cost for a level (float)
+0031ae48	LightningStrikeSpell_ctor	sets the LightningStrikeSpell virtual table; callers 31a920
+0031b1cc	LightningStrikeSpell_dtor	GameObject slot 1
+0031b25c	LightningStrikeSpell_run	GameObject slot 4: once per simulated frame
+0031b7f4	SkillConeOfShock_ctor	constructs the static Skill object; called from the start-up initialiser 0x16ac74
+0031b868	SkillConeOfShock_initStats	Skill slot 9: writes the per-level statistic tables
+0031b8f0	SkillConeOfShock_cast	Skill slot 2: (level, caster, pos*, angle) creates the spell/projectile; returns the Spell or 0
+0031b990	SkillConeOfShock_describeRank	Skill slot 4: builds the per-rank description text
+0031ba94	SkillConeOfShock_manaCost	Skill slot 5: mana cost for a level (float)
+0031bac8	SpellConeOfShock_ctor	sets the SpellConeOfShock virtual table; callers 31b8f0
+0031bc50	SpellConeOfShock_dtor	Spell slot 1: destructor (bit 0 of arg frees)
+0031bcd0	SpellConeOfShock_run	Spell slot 2: (pos*, angle) once per simulated frame from Creature slot 17
+0031c2a0	SmokeGen_readParams	reads the psr/psg/psb/psa... parameters; called by SmokeGen_ctor
+0031c898	SmokeGen_run	GameObject slot 4: once per simulated frame
+0031cbf8	SmokeGen_draw	GameObject slot 5
+0031d180	SmokeGen_ctor	sets the SmokeGen virtual table; callers 159c94
+0031e2b8	kbd_init	prints the INIT KEYBOARD banner
+0031e310	kbd_free	prints the FREE KEYBOARD banner
