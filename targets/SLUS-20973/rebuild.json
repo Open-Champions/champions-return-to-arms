@@ -148,6 +148,29 @@
         "-fomit-frame-pointer"
       ],
       "evidence": "Observed complete body 0x00208b94-0x00208b9b: writes the low 32 bits of the second argument to byte offset 0x400 of the first argument and returns, with no calls or other memory accesses. Previous body ends at 0x00208b93; next body starts at 0x00208b9c. Caller 0x00142f24 supplies a word loaded at 0x00142f28 after checking its destination is nonzero. Caller 0x00209450 supplies constant 1. Original type, signedness and field semantics remain unknown; authored ABI contract requires aligned writable 32-bit storage at offset 0x400."
+    },
+    {
+      "id": "function_001707b0",
+      "address": "0x001707b0",
+      "size": 8,
+      "source": "reconstructed/function_001707b0.cpp",
+      "symbol": "champions_rebuild_001707b0",
+      "language": "c++",
+      "compiler_args": [
+        "--no-default-config",
+        "--target=mipsel-none-elf",
+        "-march=mips3",
+        "-mabi=32",
+        "-O2",
+        "-ffreestanding",
+        "-fno-pic",
+        "-mno-abicalls",
+        "-fno-stack-protector",
+        "-fno-exceptions",
+        "-fno-rtti",
+        "-fomit-frame-pointer"
+      ],
+      "evidence": "Observed complete body 0x001707b0-0x001707b7: clears byte offset 4 through the first argument and returns, with no other memory operations, calls or globals. Previous indexed body ends at 0x001707af; next starts at 0x001707b8. Direct caller 0x00116a0c receives a pointer computed from object+0x114 at 0x00116a08 through the delay slot at 0x00116a10, then reuses that pointer without consuming a return value. A second direct call is at 0x001a2330. Original surrounding type, field meaning and name are not asserted; the byte must be writable. Complete extent and caller fields independently checked against the pinned baseline."
     }
   ]
 }

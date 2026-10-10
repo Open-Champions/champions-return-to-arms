@@ -6,7 +6,7 @@ Independently authored C++ that reproduces the original *Champions: Return to Ar
 PS2 executable, verified one complete function at a time. This repository targets
 the US v2.00 release, `SLUS_209.73`.
 
-**Current result: six complete functions, 48 matching bytes.** The original target
+**Current result: seven complete functions, 56 matching bytes.** The original target
 contains 7,732 indexed functions and 3,038,272 bytes of `.text`. No complete linked
 PS2 executable or playable game is available from this reconstruction.
 
