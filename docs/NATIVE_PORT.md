@@ -9,7 +9,8 @@ has an authored native archive inspector in `native/`, alongside research tools
 and recovered behavior. It still lacks a playable authored game engine that can
 be compiled for a MacBook or Windows PC. The practical route to a client
 without a PS2 emulator is to implement portable systems from the documented
-behavior and load the user's original data. Simply compiling the Ghidra output
+behavior and load the user's original data. **Recommended engine direction: Godot 4
+for presentation and platform services, with the existing C++ core retained.** Simply compiling the Ghidra output
 will not produce that client.
 
 ## What exists now
@@ -37,7 +38,7 @@ machine code, not the missing Snowblind source tree. See [OVERVIEW.md](OVERVIEW.
 | Boundary | Repository evidence | Proposed native replacement / missing work |
 |---|---|---|
 | CPU and memory model | R5900 little-endian 32-bit target; old GCC object/vtable conventions in `OVERVIEW.md` | Use fixed-width file fields, explicit handles and checked offsets. Do not truncate 64-bit host pointers or reinterpret on-disc records as host C++ objects. Preserve numeric behavior intentionally. |
-| Graphics and geometry | GIF DMA submission `0x3201b0`; frame/media processing `0x3205ec`; `.world`, `.vif`, `.tex`, `.anm` listed as incomplete in `FORMATS.md` | Recover the required geometry, texture, material and animation formats and write a renderer. Graphics-command bytes and VU programs are not portable GPU shaders. |
+| Graphics and geometry | GIF DMA submission `0x3201b0`; frame/media processing `0x3205ec`; `.world`, `.vif`, `.tex`, `.anm` listed as incomplete in `FORMATS.md` | Recover the required geometry, texture, material and animation formats, then create Godot mesh, texture, material and animation resources. Graphics-command bytes and VU programs are not portable GPU shaders. |
 | Console kernel and timing | Loading uses `CreateThread` at `0x321e60`; frame completion `0x19da78` uses semaphores and timer register `0x10000000` | Host threads/jobs and monotonic timing, with simulation ticks independent of rendering and loading speed. Retain necessary ordering rather than console addresses. |
 | I/O and media | `.GOB` / `.LMP` readers exist; local asynchronous resource checks gate warm-up (`0x322eb0–0x322fd0`) | Checked native archive access and asynchronous resource ownership. Decoder/audio formats and failure behavior remain work. |
 | Audio | `audio_streamPosition` at `0x216480` obtains local sound-driver state through IOP RPC | Host audio playback and a documented completion/position contract. Keep audio timing out of shared simulation, addressing rather than accidentally retaining known D8 behavior. |
@@ -50,34 +51,105 @@ order and floating-point behavior in the simulation contract. Compare arm64 and
 x64 frame traces before claiming cross-platform lockstep. The original seed/position
 checksum is useful but too narrow to prove every relevant state matches.
 
-## Recommended implementation direction
+## Recommended implementation direction: Godot 4 with a C++ core
 
-**Proposed:** an authored portable C++ core with explicit interfaces for data,
-simulation, graphics, audio, input and networking. Keep game behavior independent
-of desktop windows and render rate. A game-script interpreter is compatible with
-this direction; it is not a PS2 CPU or hardware emulator.
+**Recommendation:** use Godot 4 for the native client shell, scene rendering,
+cameras, input, UI and audio; keep archive/data code and fidelity-sensitive game
+behavior in a portable C++ core. Add a thin GDExtension adapter when a real asset
+can be decoded. The existing inspector and parser tests remain useful unchanged.
+This replaces the earlier custom SDL-renderer proposal; no Godot installation or
+project scaffold was created in this assessment.
 
-SDL3 is a reasonable candidate for the desktop shell: its official documentation
-covers Windows/macOS, input and audio. Its GPU API offers Metal and Direct3D 12
-backends, but supplying equivalent shaders remains application work. This is a
-candidate, not an installed dependency or proof the game renders correctly.
-[SDL3 overview](https://wiki.libsdl.org/SDL3/FrontPage),
-[SDL GPU](https://wiki.libsdl.org/SDL3/CategoryGPU).
+**Observed precedent:** Open-BFME has a dedicated `openbfme-godot` project, separate
+from its binary-matching BFME repositories. Its current README describes C++ game
+logic in a GDExtension and Godot as the device layer, reading original files from
+the user's installation. That is a useful architectural precedent, not proof that
+Champions formats or gameplay can be imported automatically. Its SAGE/BFME code
+is a different engine and is not incorporated here.
+[Open-BFME Godot repository](https://github.com/Open-BFME/openbfme-godot).
 
-| Intended build | Proposed toolchain and graphics direction | Required evidence |
+**Observed capability:** GDExtension loads native shared libraries without
+rebuilding Godot. Official `godot-cpp` bindings provide the C++ integration route.
+**Proposed boundary:** keep the current `champions-archive` library independent
+of Godot, and translate validated metadata/decoded resources in the adapter.
+Preserve byte-buffer ownership across calls; never expose temporary parser views
+or original 32-bit addresses as host pointers. Pin a compatible stable Godot,
+`godot-cpp` and export-template set, then build the extension for each target.
+[GDExtension overview](https://docs.godotengine.org/en/stable/engine_details/engine_api/gdextension/what_is_gdextension.html),
+[official C++ bindings](https://github.com/godotengine/godot-cpp).
+
+| Intended client build | Verified Godot export route / proposed extension build | Required project evidence |
 |---|---|---|
-| Apple Silicon MacBook | Apple Clang, CMake arm64 target; Metal-capable renderer | Mach-O arm64 binary; launch and interaction on a Mac; no Rosetta or PS2 emulator process. |
-| Intel Mac | Apple Clang, CMake x86_64 target; Metal-capable renderer | Mach-O x86_64 binary; launch on an Intel Mac and matching data/simulation outputs. |
-| Windows x64 | MSVC or compatible native compiler, CMake x64 target; Direct3D 12 candidate | PE x64 binary; launch and interaction on Windows x64; matching data/simulation outputs. |
-| Windows arm64 | Native ARM64 compiler and dependencies; renderer verified on target hardware | PE ARM64 binary and actual Windows-on-Arm test; x64 translation does not count as this target passing. |
+| Apple Silicon MacBook | Official Universal 2 macOS app export includes arm64; build extension with matching arm64 slice | Launch exported app and load extension on Apple Silicon without Rosetta or a PS2 emulator. |
+| Intel Mac | The same Universal 2 export includes x86_64; extension must include its matching slice | Launch and render the same private test asset on Intel; compare data/simulation outputs. |
+| Windows x64 | Native x86_64 export; matching x64 extension | Launch exported executable on Windows x64; verify extension and asset rendering. |
+| Windows arm64 | Native arm64 export; matching ARM64 extension | Launch on Windows-on-Arm without x64 translation; verify extension and renderer. |
 
-CMake supports explicit Apple architecture selection, and its Visual Studio
-generator supports selecting the target platform. Microsoft documents native
-Windows-on-Arm development. These establish toolchain routes, not this project's
-compatibility. Dependency architectures and graphics support still need testing.
-[CMake Apple architecture](https://cmake.org/cmake/help/latest/variable/CMAKE_OSX_ARCHITECTURES.html),
-[CMake Visual Studio](https://cmake.org/cmake/help/latest/generator/Visual%20Studio%2017%202022.html),
-[Microsoft Windows on Arm](https://learn.microsoft.com/en-us/windows/arm/overview).
+These export routes are documented by Godot. They do not establish this project's
+compatibility until the extension, assets and interactions run on each target.
+Mac distribution also requires appropriate application signing/packaging, which
+is separate from local launch verification.
+[macOS export](https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_macos.html),
+[Windows export](https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_windows.html).
+
+### What Godot solves, and what remains Champions-specific
+
+**Assessment:** adopting a maintained engine avoids building a complete desktop
+renderer and editor first. It supplies a place to display recovered resources and
+iterate on scenes. It does not translate an ELF or Snowblind game into a working
+Godot project.
+
+- **Assets:** `.GOB`/`.LMP` containment is implemented. Texture swizzling/palettes,
+  geometry/VIF data, animation/skeleton bindings, materials and `.world` layout
+  still need format-specific conversion based on the existing research. GOB
+  entry listing proves access, not that a model is decoded.
+- **Gameplay and navigation:** combat, abilities, object state, triggers, script
+  built-ins, camera behavior, pathfinding and movement rules must be authored and
+  checked. A Godot navigation mesh or physics node cannot be assumed equivalent
+  to Snowblind collision/pathfinding. A first controllable scene may use clearly
+  labelled provisional movement while these contracts are recovered.
+- **Saving:** persist an explicit native game-state schema. Reading or writing
+  original PS2 saves needs separate format and round-trip evidence; saving a
+  Godot scene is not character-save compatibility.
+- **Networking:** preserve the separation between local presentation and shared
+  simulation. Do not let render rate, audio progress or scene callback order
+  choose authoritative outcomes. Test deterministic core traces on arm64/x64;
+  fixed physics ticks alone are not proof of identical simulation.
+
+**Observed:** Godot supports replaceable multiplayer interfaces. **Assessment:**
+its default scene multiplayer cannot be assumed compatible with the documented
+original SOE protocol;
+Champions Reborn lobby compatibility and original-client interoperability need
+explicit protocol work; adding Godot RPC calls does not establish either. Keep
+initial native multiplayer tests between native peers until compatibility is
+actually demonstrated.
+[Godot MultiplayerAPI](https://docs.godotengine.org/en/stable/classes/class_multiplayerapi.html).
+
+### Next useful Godot milestone
+
+**Proposed:** first display a real texture from the user's own archive, then
+one real static mesh/material, and then a small controllable scene. Avoid treating
+a blank window or generated placeholder character as recovered Champions content.
+
+1. Select one small texture whose layout is established by the active research
+   pass. Add an authored decoder with synthetic fixtures, using the existing
+   archive library to locate its bytes. Keep original assets outside the repo.
+2. Expose the decoded texture through a thin GDExtension and display it in Godot.
+   Verify dimensions, palette/alpha and orientation against a private reference;
+   show a useful error for unsupported formats. Repeat on native Mac and Windows
+   exports, not solely in the editor.
+3. Decode one static mesh and its material, inspect scale, winding and UVs, and
+   add orbit/zoom inspection. This is an asset-viewer milestone with explicit
+   visual evidence, not a playable port.
+4. Build one bounded offline scene: a controllable character, collision, camera,
+   one trigger and save/reload. Add recovered animation as its format becomes
+   available; label provisional behavior. Record movement and state traces before
+   expanding combat, navigation or multiplayer.
+
+The public artifact contains authored decoders, extension code, scenes and
+synthetic tests. The application selects the user's game-data folder at runtime;
+original game files are not embedded in exported packages. Reuse Claude's format
+and behavior findings when they land rather than starting duplicate area audits.
 
 ### Static recompilation as a separate experiment
 
@@ -119,7 +191,11 @@ CLI identifies as Mach-O arm64 and links only system C++ and OS libraries. A sec
 read-only review independently verified malformed nested inputs produce no partial
 stdout and extreme offsets are rejected. CMake was unavailable locally, so this
 was a direct-compiler verification; configured remote CMake/CTest jobs and other
-architectures still need observed results.
+architectures were subsequently verified by [CI run 38032707157](https://github.com/Open-Champions/champions-return-to-arms-re/actions/runs/38032707157)
+at source revision `cf00c28`: macOS arm64/x64, Windows arm64/x64 and Linux x64
+all built the inspector and passed its seven CTest cases. Python checks passed
+on all targets, including a separate Linux Python 3.14 job. These results verify
+the inspector and tested tools, not a Godot export.
 
 Remaining acceptance evidence and follow-on script-inspector scope:
 
@@ -136,11 +212,9 @@ Remaining acceptance evidence and follow-on script-inspector scope:
    executable's architecture and dependency list. This proves the milestone is
    native data tooling; it does not claim a playable game.
 
-**Proposed next milestones:** an authored script VM executing synthetic programs
-with deterministic state traces; a local asset viewer after the required texture
-and geometry formats are documented; one small offline gameplay scene with
-input/collision/animation/save; finally two native peers with replay and divergent
-frame diagnostics. Each milestone requires its own behavior and visual tests.
+**Proposed next milestones:** the Godot real-asset viewer and controllable scene
+defined above, alongside an authored script VM with synthetic deterministic traces;
+finally two native peers with replay and divergent-frame diagnostics. Each milestone requires its own behavior and visual tests.
 A blank window is an integration check, not evidence of a recovered renderer.
 
 ## Completion boundary
@@ -148,6 +222,7 @@ A blank window is an integration check, not evidence of a recovered renderer.
 The authored archive parser and CLI are delivered and locally verified on
 Apple Silicon. No third-party dependencies were installed; the server and Claude
 area files were not modified by this work. The project still has no verified
-playable native client or defensible completion date. Next steps are observing
-the cross-platform CMake/CTest results, adding script metadata, and expanding
-from the ongoing research without duplicating its reverse-engineering passes.
+playable native client or defensible completion date. Cross-platform inspector
+checks passed; the next step is the first real-asset Godot integration from
+the ongoing research. Godot is the recommended next engine layer;
+no engine migration or graphical prototype is represented as completed here.

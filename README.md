@@ -51,6 +51,8 @@ disc to analyze game files; basic tool checks and synthetic tests need no game d
 The research tools run natively in Python; they do not need a PS2 emulator. A
 playable native game client does not exist yet. See the [platform setup guide](docs/COMPATIBILITY.md)
 and [native client roadmap](docs/NATIVE_PORT.md) for the distinction and next milestones.
+The recommended game-client direction is Godot 4 with a portable C++ core; the
+archive reader is implemented, while Godot asset display and gameplay are still ahead.
 
 Run `python3 tools/doctor.py` on macOS or `py -3 tools/doctor.py` in Windows PowerShell
 for a read-only setup check. Basic checks work without any game files. The optional

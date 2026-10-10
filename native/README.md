@@ -72,8 +72,10 @@ The first local validation used Apple Clang 21 on arm64 macOS, with warnings as
 errors and AddressSanitizer/UndefinedBehaviorSanitizer on parser tests: 30 checks
 passed. CLI checks passed, and 100 metadata rows across 11 private local archives
 matched `tools/gob.py`; no game contents were published. The resulting CLI was
-verified as Mach-O arm64 with only system C++/OS dynamic dependencies. CMake and
-Windows/Intel/Linux target execution require their own build/test results; the
-local direct-compiler run does not establish those targets.
+verified as Mach-O arm64 with only system C++/OS dynamic dependencies. The later [CI run 38032707157](https://github.com/Open-Champions/champions-return-to-arms-re/actions/runs/38032707157)
+built this inspector with CMake and passed all seven CTest cases on macOS arm64
+and x64, Windows arm64 and x64, and Linux x64 at source revision `cf00c28`.
+Each platform has a downloadable tool package and checksum manifest in that run.
+These results establish the inspector milestone, not native gameplay.
 
 See [native-port assessment](../docs/NATIVE_PORT.md) for remaining game-engine work.
