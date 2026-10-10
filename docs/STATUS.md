@@ -16,8 +16,8 @@ understood: see the area document in `docs/` for what has actually been read.
 | ui | 1c0000–1e8000 | 222 | 10 | 3% | inventory and menus, HUD, shop, game state |
 | gameplay | 1e8000–210000 | 276 | 11 | 1% | damage, triggers, effects, world camera, vehicles |
 | audio-save | 210000–232000 | 293 | 5 | 2% | sound, save and load, mission menu, store |
-| monsters | 232000–2c2000 | 879 | 4 | 1% | monster classes and level objects (chests, traps, gates, savepoints) |
-| skills | 2c2000–320000 | 988 | 8 | 5% | Skill and Spell classes |
+| monsters | 232000–2c3cd4 | 885 | 5 | 2% | monster classes and level objects (chests, traps, gates, savepoints) |
+| skills | 2c3cd4–320000 | 982 | 7 | 3% | Skill and Spell classes |
 | mainloop | 320000–323dcc | 39 | 2 | 4% | task scheduler and main loop |
 | netlib | 323dcc–3b0000 | 2066 | 5 | 1% | lobby client, SOE UdpLibrary, AES, Sony SDK libraries |
 | runtime | 3b0000–3e6000 | 1460 | 0 | 0% | C and C++ runtime, type info, static constructors |
