@@ -1,0 +1,22 @@
+# Whitelist: nothing from the game may be committed. Everything is ignored unless listed here.
+/*
+!/.gitignore
+!/README.md
+!/CONTRIBUTING.md
+!/LICENSE
+!/FINDINGS.md
+!/names.tsv
+!/rtti_classes.txt
+!/vtables.txt
+!/ghidra_funcs.tsv
+!/docs/
+!/symbols/
+!/tools/
+!/patches/
+!/ghidra/
+/ghidra/*
+!/ghidra/scripts/
+__pycache__/
+*.pickle
+*.pyc
+.DS_Store

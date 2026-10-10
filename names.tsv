@@ -1,0 +1,355 @@
+# addr	name	source
+00143158	script_callScript	script-builtin-table@00403370
+00143120	script_print	script-builtin-table@00403370
+00143150	script_printVal	script-builtin-table@00403370
+001435e0	script_sound	script-builtin-table@00403370
+00143684	script_soundSequence	script-builtin-table@00403370
+00143720	script_lightEffect	script-builtin-table@00403370
+00143e70	script_simpleNewWorld	script-builtin-table@00403370
+00143dd0	script_newWorld	script built-ins newWorld and newWorldAlways share this function; net games gate it with newWorld_netGate
+00143cc4	script_newWorldPost	script-builtin-table@00403370
+00143fa8	script_activateMissionMenu	script-builtin-table@00403370
+00144010	script_activateStore	script-builtin-table@00403370
+001440f8	script_storeRunning	script-builtin-table@00403370
+0014412c	script_getScaledTime	script-builtin-table@00403370
+00144104	script_setFarClip	script-builtin-table@00403370
+00143824	script_startDialog	script-builtin-table@00403370
+001438b0	script_changeSwoop	script-builtin-table@00403370
+001438c4	script_startWithSwoopDone	script-builtin-table@00403370
+00143cb0	script_dialogRunning	script-builtin-table@00403370
+00144200	script_increaseEnemyRank	script-builtin-table@00403370
+0014429c	script_charmMonster	script-builtin-table@00403370
+0014433c	script_rootMonster	script-builtin-table@00403370
+00144408	script_unRootMonster	script-builtin-table@00403370
+00144514	script_selectSetMonsterVal	script-builtin-table@00403370
+00144550	script_setMonsterVal	script-builtin-table@00403370
+001446d0	script_selectSetCFlag	script-builtin-table@00403370
+00144714	script_setCFlag	script-builtin-table@00403370
+001447fc	script_selectSetOFlag	script-builtin-table@00403370
+00144834	script_setOFlag	script-builtin-table@00403370
+001448e4	script_setWeaponType	script-builtin-table@00403370
+001449b4	script_setMonsterRange	script-builtin-table@00403370
+00144a84	script_killMonster	script-builtin-table@00403370
+00144b44	script_deleteMonster	script-builtin-table@00403370
+00144c00	script_hideMonster	script-builtin-table@00403370
+00144db8	script_showMonster	script-builtin-table@00403370
+00144cb8	script_moveMonster	script-builtin-table@00403370
+00144e78	script_followPlayer	script-builtin-table@00403370
+00144f2c	script_stopFollowingPlayer	script-builtin-table@00403370
+00144fc8	script_followPath	script-builtin-table@00403370
+00145090	script_selectFollowPath	script-builtin-table@00403370
+001450ec	script_stopFollowingPath	script-builtin-table@00403370
+001451f0	script_selectStopPath	script-builtin-table@00403370
+00145294	script_friendly	script-builtin-table@00403370
+00145338	script_unFriendly	script-builtin-table@00403370
+00143a8c	script_startPropAnim	script-builtin-table@00403370
+00143bb8	script_stopPropAnim	script-builtin-table@00403370
+00143bf4	script_propAnimAtEnd	script-builtin-table@00403370
+001438d8	script_startNPCAnim	script-builtin-table@00403370
+00143a4c	script_NPCAnimAtEnd	script-builtin-table@00403370
+00143c34	script_addExpandingPool	script-builtin-table@00403370
+00145590	script_playerHasItem	script-builtin-table@00403370
+00145690	script_onePlayerHasItem	script-builtin-table@00403370
+0014598c	script_removePlayerItem	script-builtin-table@00403370
+00145a88	script_givePlayerItem	script-builtin-table@00403370
+00145d20	script_giveOnePlayerItem	script-builtin-table@00403370
+00145f18	script_givePlayerRandom	script-builtin-table@00403370
+00146278	script_givePlayerExp	script-builtin-table@00403370
+001462dc	script_givePlayerGold	script-builtin-table@00403370
+001463ec	script_takePlayerGold	script-builtin-table@00403370
+0014644c	script_checkPlayerGold	script-builtin-table@00403370
+00146494	script_checkPlayerMinGold	script-builtin-table@00403370
+001464e8	script_playGotItemSound	script-builtin-table@00403370
+0014318c	script_setInfo	script-builtin-table@00403370
+001431d8	script_addHelpMessage	script-builtin-table@00403370
+001433c8	script_addQuest	script-builtin-table@00403370
+00143448	script_removeQuest	script-builtin-table@00403370
+00146628	script_hornOmen	script-builtin-table@00403370
+001466d4	script_planarSteel	script-builtin-table@00403370
+001467ac	script_particleMorph	script-builtin-table@00403370
+001468ac	script_healPlayer	script-builtin-table@00403370
+00146ab0	script_leaveGame	script-builtin-table@00403370
+00146ad4	script_endGame	script-builtin-table@00403370
+00146af8	script_clearRecall	script-builtin-table@00403370
+00146b68	script_startMusic	script-builtin-table@00403370
+00146ba4	script_startAudio	script-builtin-table@00403370
+00146be4	script_endMusic	script-builtin-table@00403370
+00146c04	script_saveGame	script-builtin-table@00403370
+00146c78	script_saveEndConfig	script-builtin-table@00403370
+00146d5c	script_saveDone	script-builtin-table@00403370
+00146d80	script_exitToMainMenu	script-builtin-table@00403370
+00143500	script_getv	script-builtin-table@00403370
+00143534	script_getNumPlayers	script-builtin-table@00403370
+00143540	script_setv	script-builtin-table@00403370
+00143588	script_addv	script-builtin-table@00403370
+001434b4	script_setpv	script-builtin-table@00403370
+00143480	script_getpv	script-builtin-table@00403370
+00146570	script_getRand	script-builtin-table@00403370
+001465a0	script_activePlayerIsDwarf	script-builtin-table@00403370
+001465c4	script_activePlayerIsElf	script-builtin-table@00403370
+001469f0	script_pauseGameControl	script-builtin-table@00403370
+00146aa4	script_levelLoading	script-builtin-table@00403370
+00146d94	script_setParticle	script-builtin-table@00403370
+00146e20	script_addParticleOnObject	script-builtin-table@00403370
+00146f58	script_setNoCollide	script-builtin-table@00403370
+00146fc0	script_shakeCamera	script-builtin-table@00403370
+00146ff4	script_deleteObjects	script-builtin-table@00403370
+00147098	script_hidePlayers	script-builtin-table@00403370
+001470ac	script_checkPlayerAlive	script-builtin-table@00403370
+001470e0	script_setBestActivePlayer	script-builtin-table@00403370
+00147130	script_decayPlayerLights	script-builtin-table@00403370
+001441c0	script_checkMonstersLeft	script-builtin-table@00403370
+001471dc	script_forceMutexRelease	script-builtin-table@00403370
+00144160	script_addDeferedCall	script-builtin-table@00403370
+00143f1c	script_cutScene	script-builtin-table@00403370
+00143ee4	script_postAction	script-builtin-table@00403370
+001471fc	script_newWorldParameter	script-builtin-table@00403370
+00142bdc	script_putNPCInVehicle	script-builtin-table@00403370
+00142df4	script_putPlayersInVehicle	script-builtin-table@00403370
+00142c78	script_entityRideVehicle	script-builtin-table@00403370
+00142d94	script_controlVehicle	script-builtin-table@00403370
+00147278	script_playersLoaded	script-builtin-table@00403370
+00142eec	script_holdVehicle	script-builtin-table@00403370
+00142f40	script_getPlayerVPosition	script-builtin-table@00403370
+001430cc	script_getVPosition	script-builtin-table@00403370
+00142fc8	script_getPlayerVDir	script-builtin-table@00403370
+00142bb8	script_setupPlayerSel	script-builtin-table@00403370
+00142bc0	script_startPlayerSel	script-builtin-table@00403370
+00142bc8	script_playerSelRunning	script-builtin-table@00403370
+00142ad4	script_objInPlayerTrig	script-builtin-table@00403370
+00142a94	script_setEntrance	script-builtin-table@00403370
+0014277c	script_hudResetFadeScreen	script-builtin-table@00403370
+0014279c	script_hudFadeScreen	script-builtin-table@00403370
+0014268c	script_closestPlayerDist	script-builtin-table@00403370
+001424dc	script_hitPlayers	script-builtin-table@00403370
+00142450	script_zeroPlayerMana	script-builtin-table@00403370
+001427b4	script_showCompass	script-builtin-table@00403370
+00142864	script_showBust	script-builtin-table@00403370
+001428fc	script_getMaxPlayerHP	script-builtin-table@00403370
+00142944	script_getHitPoints	script-builtin-table@00403370
+001429e0	script_setHitPoints	script-builtin-table@00403370
+00142a40	script_saveCheckPoint	script-builtin-table@00403370
+00142a74	script_loadCheckPoint	script-builtin-table@00403370
+00142264	script_trigger	script-builtin-table@00403370
+00142320	script_autoPropSetState	script-builtin-table@00403370
+001423e0	script_autoPropGetState	script-builtin-table@00403370
+0014222c	script_preloadResource	script-builtin-table@00403370
+001473b4	script_setSaveInhibit	script-builtin-table@00403370
+001473c8	script_getSaveInhibit	script-builtin-table@00403370
+00145720	script_countQuestItems	script-builtin-table@00403370
+00142220	script_countPlayersAlive	script-builtin-table@00403370
+00146a10	script_countLiveObjects	script-builtin-table@00403370
+00142214	script_networkMode	script-builtin-table@00403370
+001421fc	script_getManaUsed	script-builtin-table@00403370
+00142208	script_getHealthUsed	script-builtin-table@00403370
+001421a8	script_getLevelTimer	script-builtin-table@00403370
+00142044	script_getEvil	script-builtin-table@00403370
+00142058	script_setEvil	script-builtin-table@00403370
+00142010	script_getMadeDecision	script-builtin-table@00403370
+00142024	script_setMadeDecision	script-builtin-table@00403370
+001420a4	script_grantMission	script-builtin-table@00403370
+00142084	script_getMissionComplete	script-builtin-table@00403370
+001420d0	script_setMissionAvailable	script-builtin-table@00403370
+001420fc	script_getMissionAvailable	script-builtin-table@00403370
+0014211c	script_grantGold	script-builtin-table@00403370
+00142140	script_grantSilver	script-builtin-table@00403370
+00142164	script_grantBronze	script-builtin-table@00403370
+00142188	script_getMedal	script-builtin-table@00403370
+001473d4	script_generateMonster	script-builtin-table@00403370
+00147570	script_monstersInTrigger	script-builtin-table@00403370
+00141fb0	script_sin1000	script-builtin-table@00403370
+00141fe0	script_cos1000	script-builtin-table@00403370
+001433bc	script_helpMessageActive	script-builtin-table@00403370
+00143270	script_addHelpMessageF	script-builtin-table@00403370
+00141e78	script_revealMap	script-builtin-table@00403370
+00141e98	script_showOnMap	script-builtin-table@00403370
+00147640	script_initScriptSetParams	script-builtin-table@00403370
+001476c0	script_setCreatureParams	script-builtin-table@00403370
+001433a8	script_explodePotionsOnly	script-builtin-table@00403370
+001417a4	script_runMedalSuccess	script-builtin-table@00403370
+00141c00	script_runMedalFail	script-builtin-table@00403370
+00141790	script_setAlternateDeath	script-builtin-table@00403370
+001477ac	script_dropItem	script-builtin-table@00403370
+00147860	script_selectDropItem	script-builtin-table@00403370
+001478c8	script_findDistance	script-builtin-table@00403370
+0014799c	script_setContainerProps	script-builtin-table@00403370
+0014176c	script_setWaveDetail	script-builtin-table@00403370
+00141764	script_demoRunning	script-builtin-table@00403370
+00145758	script_removeAllItems	script-builtin-table@00403370
+00141724	script_savePlayer	script-builtin-table@00403370
+00141744	script_restorePlayer	script-builtin-table@00403370
+00145610	script_piercePlayerEar	script-builtin-table@00403370
+00146348	script_playerAdjustStat	script-builtin-table@00403370
+00146950	script_giveFullHealth	script-builtin-table@00403370
+001416d4	script_setPlayerFlag	script-builtin-table@00403370
+001416fc	script_getPlayerFlag	script-builtin-table@00403370
+001458e0	script_clearAllSkills	script-builtin-table@00403370
+001465cc	script_isClericOrWizard	script-builtin-table@00403370
+00142494	script_refillPlayerMana	script-builtin-table@00403370
+00145828	script_removeAllWeapons	script-builtin-table@00403370
+# ---- netcode: functions (hand-identified from strings/xrefs; names are mine) ----
+001397a0	net_gameInit	zeroes lockstep state, sets netFrame=1
+00139e88	net_frameLoop	lockstep main loop: runs sim tick, builds per-frame sync hash, compares with peers
+0013ae60	net_frameLoop_hashBlock	inside net_frameLoop: hash = g_syncAcc + g_randSeed + sum((int)pos.xyz of each player)
+0013b048	net_frameLoop_compare	inside net_frameLoop: peer ring[frame&0xff] vs local -> sets peer+0x44d7, prints "out of SYNC"
+0013b5d0	net_frameLoop2	second site printing "Player %d is out of SYNC"
+0013db38	net_sendGameMsg	(conn, buf, len) - used for msg types 0x01,0x09,0x0a,0x0b,0x0c
+0013de68	net_disconnectPlayer	(player, whackHim) "NET: DISCONNECTING PLAYER %d on frame %d"
+0013e1f0	net_getLocalPlayerSlot	(n) -> slot index of n-th local player
+0013e618	net_peerIsOutOfSync	(p) -> peer[p]+0x44d7
+00134c60	net_launchTransfer	SHAKE/SIZE/DATA handshake, allocs 0x8000 "Net Launch buff"
+001bdc98	player_checksum	(slot, PlayerData*) anti-tamper checksum of selected character fields
+001bf8d8	game_getEvil	player[0]+0x4c1a bit g_difficultyIdx
+001bf8f8	game_setEvil	sets/clears that bit on every player
+001bf960	game_getMadeDecision	player[0]+0x4c1b bit g_difficultyIdx
+001bf980	game_setMadeDecision
+001d90a4	netmsg_0a_checksum_handler	case target: compares received player checksums, prints "CHECKSUM ERROR"
+001de46c	net_sendChecksums	builds msg 0x0a from player_checksum() of live + saved copy
+001dbc48	hud_netStatusDraw	draws "Net Checksum Failure" (g_checksumFailed) and "<name> ... IS OUT OF SYNC!" (net_peerIsOutOfSync)
+0014a928	world_collectObjectsInBox	(min, max, out[], max) - used by script_reapEnemies
+00324920	lobby_createSOEGamesAPI	new SOEGamesAPI("con.soegames.net", 40810)
+0032a650	srs_getUdpManager	builds UdpManager::Params (defaults + overrides) and news the manager
+0032aa48	srs_createGame
+00329d58	srs_notifyClientRequestsConnect2	EstablishConnection to ext / int address
+00396624	UdpManager_ctor	asserts from UdpManagerPS2.cpp
+00355490	dbg_printf
+0014ff88	mem_allocTagged	(size, tag)
+# ---- netcode: globals ----
+00402791	g_networkMode	s8, nonzero in a net game
+004027ac	g_netFrame	s32 lockstep frame counter
+004027c0	g_syncAcc	s32, added into the per-frame sync hash; zeroed in net_gameInit
+004027c4	g_numPeers	s32
+004027d4	g_netAckFrame	s32, net_frameLoop stalls when g_netFrame - this >= 31
+00404464	g_randSeed	u32 LCG state: s = s*1664525 + 1013904223; ~194 inlined use sites
+004d8ae0	g_numPlayers	s32
+004d8af0	g_players	PlayerData[4], stride 0x4c30; +0x43d8 = GameObject* (pos floats at +0x10/+0x14/+0x18); +0x4c1a evil bits; +0x4c1b madeDecision bits
+004f719c	g_difficultyIdx	bit index used by getEvil/getMadeDecision
+004f7144	g_checksumFailed	set by netmsg_0a handler, drives "Net Checksum Failure"
+005bf838	g_peers	peer[4], stride 0x44e0; +0x18ac sync ring (256 x {frame, time, hash}); +0x44d4 isLocal; +0x44d7 outOfSync
+005c10e4	g_localSyncRing	256 x 12 bytes {frame, time, hash}, index = frame & 0xff
+0086ab38	g_expectedChecksums	int[4][2]
+0086ab58	g_receivedChecksums	int[4][2]
+0086ac40	g_netGameConn
+# ---- script VM (threaded code; opcode semantics are in tools/scr.py) ----
+0013e6d0	scr_relocate	loader: swaps opcodes for handler addresses (table 0x403150), relocates code operands
+0013ecf8	scr_interpret	computed-goto interpreter; called with NULL returns the handler table
+00403150	scr_handlerTable	131 opcode handlers
+00403370	scr_builtinTable	191 x {name, handler}
+001ed778	vars_get	quest variable lookup by name (lower-cased)
+001ed854	vars_set	quest variable store, value clamped to a signed byte
+001ed728	vars_clearAll	zeroes every value, keeps names
+001ed974	vars_getByIndex	used by the save builder
+0086da80	g_questVars	packed table of name\0 value-byte entries; never sent over the network
+001e6f58	game_resetState	clears quest vars, sets needPlayers=1; run on a fresh net launch
+0021f144	save_clearBuffer	zeroes the in-memory save area 0x895580 (0x4bc78 bytes) on a fresh net launch
+00221914	save_build	4 player structs + quest variable records into the save buffer
+00221d60	save_load	restores players and quest variables from the save buffer
+00218128	save_game	called by Savepoint::run and script saveGame, in lockstep on every machine
+001e7438	game_checkAllDead	all players dead -> countdown -> schedules deathTask (also in net games with 2+ players)
+001e75e8	deathTask	restart level with full HP, or save_load if the level has a checkpoint entry
+001ebd48	deathTask_schedule
+0013dd88	net_fewerThanTwoActive
+# ---- cutscenes (.cut: header {flags, keyOff, nKeys, actorOff, nActors}; 20-byte keys {float t, s16 actor, s16 type, 3 x i32}) ----
+0019b4dc	cut_start	sets g_cutsceneActive, registers cutRunFrame/cutDrawFrame tasks
+00199944	cut_runFrame	per lockstep frame in net games; any player's pad bit 0x800 skips
+00199214	cut_advance	runs each actor's run(), services pathfinding, executes keys with time <= clock
+00196788	cut_execKey	actor -100 = camera, -99 = dialog/net wait, >=0 = level object (0 walk, 2 anim, 8 show, 10 teleport, 11 face)
+0019a0dc	cut_end
+0044fcd0	g_cutsceneActive	s8
+0044fce0	g_cutFrame	s32 cutscene clock in frames
+0044fcec	g_cutSkip	s8
+0014699c	script_gamePaused	script built-in: g_paused || jump-gate menu state (0x500ae8) || g_cutsceneActive
+0041b4f4	g_paused	s32; the only thing the net frame loop treats as paused
+# ---- randomness ----
+001509d0	GameObject_rand	per-object LCG, state at object+0x44, seeded from g_randSeed in the constructor
+00404460	g_cosmeticSeed	second LCG for particles; NOT in the sync hash; cutscenes reseed it from the frame counter
+0014cb10	GameObject_ctor	draws one value from g_randSeed for the object's own seed
+0014fdb8	pool_new	pooled allocator, zero-fills the block
+00184798	path_service	time-sliced pathfinding queue (128 entries at 0x7d43a8); 1 request per call
+# ---- main loop / tasks ----
+0032316c	main_loop	net games tick only through net_main; draw tasks run every rendered frame
+00132e90	net_main	calls net_frameLoop
+003226e4	tasks_run	run-phase tasks once per simulated frame
+0019e4a0	task_add	(fn, priority, name, isDraw)
+0041bfd8	g_pads	4 x 0x58 per-player input; +0xc buttons
+# ---- evil-path arena (DRUNARE) content ----
+00271c70	Horsemen_ctor	class behind objects UndeadKnight1-4 (variant 0-3, no mount) and Rider* (mounted, BLOMEDAL only)
+0027236c	Horsemen_run	variants cast player skills: 0 DiseaseBolt, 1 FireStorm, 2 TagarsInsects, 3 SummonSkeleton
+00270968	Nightmare_ctor	the mount; not created for UndeadKnight1-4
+0024a670	Cazic_ctor	object cazicavatar; casts FireStorm and SummonSkeleton
+001453e4	script_reapEnemies	script built-in: deletes (not kills) every object with flags&0x28==0x28 and !0x40; its three typeid tests compare against pointer types and can never match
+0041b170	g_skillTable	pointers to the static Skill objects (index 4 DiseaseBolt, 7 FireStorm, 11 SummonSkeleton, 87 TagarsInsects)
+# ---- activity, camera and cutscene audio sync (added after the second static pass) ----
+0014b910	runObjects	run task prio 10: active list every frame, others every 15th/60th frame
+0014db08	obj_updateActive	(obj, wasActive, radius): near any player, or near g_cameraFocus when g_cullByCamera
+0010c0f0	Creature_updateActive	wrapper; several creature classes skip their AI when it returns 0
+001e77c0	isNearView	(pos, radius): camera focus when g_cullByCamera, else any player; 14 gameplay callers
+001ebd90	isNearCameraFocus480	camera only; all 7 callers are particle/effect code
+001e4d48	gameSetObjectVis	first run task: builds activity centers; net games clear g_cullByCamera only when no cutscene is active
+0018a520	camera_updateFocus	g_cameraFocus = camera position + forward * 600; called by cut_runFrame and drawWorld
+001ebc18	drawWorld	draw task prio 30
+004039c1	g_cullByCamera	s8
+0044f048	g_cameraFocus	Vec3
+004039c8	g_activityCenters	Vec3[4], count at 0x403a08
+00183e40	path_search	gives up for the frame when hardware timer T0 >= 7513 unless called in blocking mode
+00322970	task_plotroute	run task prio 1000 (last): path_service(0) when no cutscene; followed by the blocking call in net_frameLoop
+00216480	audio_streamPosition	blocking IOP RPC to the sound driver; local hardware timing
+0083d18c	g_cutSpeaker	creature speaking the current dialog line; set in cut_execKey from the .dbin speaker name
+0044fd30	g_cutAudioCorrection	float, +0.1 / -0.1 / 0; added to every animation track time of g_cutSpeaker each frame
+0010b048	Creature_draw	draw slot 5 body shared by all creatures; 0x10b898-0x10b8d4 decrements the first non-zero status counter at +0x36c (never index 12) when not frozen
+00112948	Creature_run	common creature run; turns status counter 7 (+0x388) into slow amount +0x2fc; burn tick draws g_randSeed
+0011c298	Creature_clone	vtable slot 15; every handle list in the copy starts empty
+0011e870	Player_clone	vtable slot 15 of Player (0x590 bytes); used to make the prediction ghost
+001309f0	clone_50d590	slot 15 of the class with vtable 0x50d590 (0x3c8 bytes); not Player
+001a5030	Player_run	30,324 bytes; runs for the prediction ghost too (flag 0x20000 guards)
+001a46c0	Player_draw	skips the ghost during cutscenes; calls Player_interact in display mode
+001a1bb8	Player_dtor	skips global side effects when g_inGhostOp is set
+00117128	Creature_dtor	deletes every spell in the +0x364 list
+00131d88	net_predictLocalPlayer	runs ghost run() for unconfirmed frames; restores only seed, hp +0xac, mana +0xc0, obj pointer
+0014b168	world_drawObjects	frustum cell walk; stops when render buffer < 3000 free; iterators take g_excludeMask
+001ebdf8	game_isFrozen	net game: g_paused only
+00174410	pad_apply	(pad, record, prevState): rewrites every pad field; 0x41bfc0 and 0x41c138 are never written
+001a1860	handle_initEmpty	the "copy constructor" of a handle list: writes 0
+001a1738	handle_link	(listHead, objBackList, obj)
+001a1698	handle_clear	
+001a1a48	iter_begin	(iter, listHead, excludeMask)
+001a1b38	iter_next	
+001a1ae8	iter_end	
+0011a838	creature_addSpell	links a Spell into creature+0x364
+0011a788	creature_findSpell	(creature, skillId, caster)
+0011a710	creature_findSpellByType	(creature, typeinfo)
+001b2cc0	Player_processDamage	pending damage +0x2dc/+200 -> hp, stagger, death; runs for the ghost; PvP tail not ghost-guarded
+001b9cb8	Player_usePotion	ghost-guarded; menu path differs for the local player
+001b2640	Player_interact	(player, pad, displayOnly); sets g_scriptActivePlayer when used
+001b7158	Player_recalcDamage	x1.5 if status counter 2, x1.2 if counter 4
+001e72f8	game_rebuildAlivePlayers	fills g_alivePlayerCount / g_alivePlayers and the local-only lists
+001eb000	net_closeLocalMenus	(isDeath); on newWorld also dismounts vehicles
+001ecf3c	Trigger_run	tests g_players[i].obj against the rectangle; sets g_scriptActivePlayer
+001ed694	script_runByName	
+00143d04	newWorld_netGate	net game: refuses newWorld while active player's +0x4bca cooldown runs, else sets it to 600
+001509f8	obj_moveAndCollide	projectile step; collisions via world_collectObjectsInBox
+0016a964	Spell_rand	per-spell LCG at spell+0x10
+002d470c	FireStorm_run	
+002d33c0	FireStormFlare_run	
+002ca1a8	DiseaseBolt_run	
+002caec8	DiseaseBolt_onHit	
+0030cbc8	SpellTagarsInsects_run	
+0030d998	SpellTagarsInsects_pickTarget	
+0030d558	SpellTagarsInsects_tickVictims	
+002c2440	Zek_run	Rallos Zek boss AI; creates objects on animation events
+001db870	hud_run	run task; opens menus from the raw local pads
+001c15c8	menu_openInventory	body runs only for the local slot; g_paused only offline
+0013e150	net_isLocalSlot	
+004027bc	g_ghost	prediction copy of the local player (flag 0x20000)
+00402797	g_forceGhostRebase	set by knockback, death, movement skills
+00402795	g_inGhostOp	1 while the ghost is predicted, deleted or cloned
+00402796	g_predictCatchingUp	
+00402794	g_inSimTick	
+004027a4	g_localInputFrame	newest frame with local input
+004d8ae4	g_scriptActivePlayer	player index scripts act on
+004f8420	g_alivePlayerCount	
+004f8440	g_alivePlayers	
+0041b69d	g_localMenuOpen	
+004028d0	g_rawPads	local controller state, edge bits consumed by the first sim tick of a frame
+004f711c	g_pvpModeA	set by game setup 0x1e15f8 / 0x1e1888
+004f7120	g_pvpModeB	

@@ -1,0 +1,94 @@
+# Findings ledger — Champions: Return to Arms (SLUS-20973 v2.00)
+
+Each row says what kind of claim it is. "Observed" = read directly from the bytes at the
+address given. "Inferred" = follows from observations but not seen happening. "Unknown" =
+not established; the note says what would settle it. Nothing here was observed on a
+running game.
+
+Paths under `scripts/`, `decomp/` and `extracted/` are files you generate locally from your
+own disc with the tools in this repository; they are not part of it.
+
+## Evil-path arena desync
+
+| ID | Claim | Kind | Evidence |
+|---|---|---|---|
+| D1 | "… IS OUT OF SYNC!" is raised when a peer's per-frame hash (shared seed 0x404464 + int player positions) differs from ours for the same frame | Observed | 0x13af44–0x13b118, HUD 0x1dbd5c |
+| D2 | The arena level is DRUNARE; its script calls getv, cutScene, postAction, reapEnemies and never getEvil | Observed | script.scr decompiled with tools/scr.py |
+| D3 | Objects UndeadKnight1–4 are class Horsemen (no mount) and cast player skills 4, 7, 87, 11 (DiseaseBolt, FireStorm, TagarsInsects, SummonSkeleton) | Observed | factory 0x15b804–0x15b900, 0x272a50–0x272c78, skill table 0x41b170 |
+| D4 | Quest variables are not networked; a fresh net launch clears them and zeroes the save buffer on every machine | Observed | 0x1e0b40, 0x1375c4–0x1375cc, no setv in message handlers 0x1d8cf0–0x1d9250 |
+| D5 | The pathfinder is budgeted by hardware timer T0, but net_frameLoop follows it with a blocking pass every frame, so results land on the same frame everywhere | Observed | 0x184de4–0x184df8, 0x184324, 0x13af3c |
+| D6 | In a net game, while a cutscene is active, object activity is decided by distance to the camera focus instead of to the players | Observed | 0x1e4db4–0x1e4ddc, 0x14db28–0x14dba0 |
+| D7 | During a cutscene the camera focus is the cutscene camera's, the same on every machine | Inferred | cut_runFrame 0x199d58–0x199d60 is the last camera writer each frame; not checked against every draw-phase camera writer |
+| D8 | During a dialog line, the speaking creature's animation track times are nudged ±0.1 per frame toward the local audio stream position, with no network-mode check | Observed | 0x199444–0x1995c8, speaker chosen at 0x196a1c–0x196a68, audio position via IOP RPC 0x216480 |
+| D9 | Only 7 of the 63 cutscenes on the disc have a speaking creature; the first one on the evil path is DRUNARE's bossdefeated (speaker "Rallos") | Observed | scan of every .cut/.dbin on the disc |
+| D10 | D8 changes the sync hash and is the cause of the arena desync | Unknown | Needs two running copies: play the arena ending with and without patches/SLUS-20973_4028A55F.pnach |
+| D11 | reapEnemies deletes objects directly and three of its type tests can never be true | Observed | 0x1453e4–0x145590, type names P6PhProp / P4Prop / P8ItemProp |
+| D12 | The creature draw function decrements the first non-zero of 16 status counters at creature+0x36c (index 12 is never decremented) whenever the game is not frozen; in a net game "frozen" is only the pause flag | Observed | 0x10b898–0x10b8d4 inside Creature_draw 0x10b048; game_isFrozen 0x1ebdf8 |
+| D13 | How often an object is drawn differs per machine: the draw pass walks only grid cells in the local camera frustum, stops when the render buffer has fewer than 3000 units free, and skips objects matching the exclude mask, which during drawing is 0x200000 — a flag each machine sets only on its own local player | Observed | world_drawObjects 0x14b168 (draw calls 0x14b4f8–0x14b8b0); mask writes 0x139f4c, 0x13b1f0, 0x131e38; flag set 0x13b578 |
+| D14 | Simulation code reads those counters: counter 2 gives the player +0.25 speed, ×1.5 weapon damage and drains mana; counter 4 gives +0.1 speed and ×1.2 damage; counter 7 becomes a creature's slow amount (+0x2fc), which movement and animation read; the damage function reads counter 12 | Observed | 0x1a5ac0, 0x1aa0f0–0x1aa0f8, 0x1b7acc–0x1b7b1c, 0x113614–0x1137d8, 0x1e8c14 |
+| D15 | The only code that sets counters 2, 7, 12 or 13 is four ability effect types (0x0e, 0x19, 0x1a, 0x1b) inside Player_run; their animation names ("*_warcry.anm", "spel_cas_repulsion.anm") look inherited from the engine's earlier game. Counters 8, 10 and 11, which Return to Arms code does set, are read only by drawing | Observed | 0x1a71c4; 0x1ac02c → 0x293704; 0x1ac164 → 0x29486c; 0x1abe90; setters 0x27eae8, 0x2940e8–0x2940f8, 0x1e8c9c |
+| D16 | Whether any Return to Arms character can trigger those four effects. If one can, D12–D14 desync the game whenever it is used | Unknown | Read a character's ability records (player record +0x4440, 0x68 bytes each, effect type at +0x20) from a memory snapshot |
+| D17 | The arena script's delays (300 frames after the fourth knight, 250 and 1500 after the avatar) count a script variable once per simulated frame; getScaledTime multiplies by 60 × 1/60; gamePaused is pause flag, jump-gate flag or cutscene flag. All of it is lockstep state | Observed | scripts/DRUNARE.txt; 0x14412c; 0x14699c; 0x27dd68 |
+| D18 | bossdefeated.cut runs 53 s; dialog lines start at 13.4 s and three "everyone wait" keys (27.06, 35.18, 49.57 s) hold the cutscene until every machine's own audio stream has ended and its "done" game message has arrived. The speaker's animation is being nudged (D8) for about 36 s of that | Observed | key dump of extracted/DRUNARE/drunare.lmp/bossdefeated.cut; cut_advance: local audio status 0x199398, "done" message 0x1993b8, peer count 0x1993cc |
+| D19 | While he is a cutscene actor the speaker sits in AI state 0x14, whose animation-event handler uses only the creature's own random generator; that handler, the scripted move and the animation step make no direct call that writes the shared seed. So on the evil path, where Rallos only speaks and the level then changes, D8 has no route to the sync hash through these functions; what it does desynchronise is the speaker's own generator, which decides his attacks in levels where the speaker fights afterwards (DRUNARM, BOSSEVIL, BOSSGOOD, DIS2, NIT2) | Inferred | Zek_run 0x2c2440 case 0x14 → 0x113c48, 0x1108a0; tools/ghostreach.py from 0x1108a0, 0x113c48, 0x1162b0 lists no store to 0x404464 (virtual calls not followed); attack choice by own generator at Zek_run state 5 |
+| D20 | newWorld in a net game is refused while the "active player" has a 600-frame cooldown running, and otherwise starts that cooldown. The active player is written by trigger volumes, interact, NPC talk, setBestActivePlayer and a mission-menu reset | Observed | newWorld_netGate 0x143d04; writers 0x1ed15c, 0x1b2b70, 0x116d28, 0x1470fc, 0x22fa34 (caller 0x1e50c8 not classified as simulation or local) |
+
+## Local-player prediction (the "ghost")
+
+| ID | Claim | Kind | Evidence |
+|---|---|---|---|
+| G1 | Each machine keeps a second copy of its own player, made with Player_clone, and re-makes it when more than 30 frames are unconfirmed or a force flag is set. The copy gets flag 0x20000; the real local player gets 0x200000. The shared seed is saved and restored around the clone | Observed | 0x13b204–0x13b5b0; Player_clone 0x11e870 |
+| G2 | The clone starts with every handle list empty (attached spells +0x364, +0x360, +0x234, +0x238, +0x2e4, +0x4b8, +0x588), so the copy cannot share or delete the real player's spells | Observed | handle_initEmpty 0x1a1860; Player_clone lines for those offsets |
+| G3 | For every unconfirmed frame the prediction loop writes the local input into the lockstep pad slot, points the player table at the copy, runs Player_run on it, and then restores exactly four things: the shared seed, hp, mana and the table pointer | Observed | net_predictLocalPlayer 0x131d88 (loop tail 0x132bf4–0x132cf0) |
+| G4 | The local player's own input is passed through the same lossy encode → decode as the wire before the simulation uses it; simulation and prediction each have their own copy of the codec state | Observed | net_frameLoop: encode calls 0x13a29c–0x13a328, decode calls 0x13a84c–0x13a99c, pad_apply 0x13ac84; prediction: 0x132134–0x13285c, 0x132b5c; state at 0x5bf798/0x5bf7e8 and 0x5bf6f8/0x5bf748 |
+| G5 | pad_apply rebuilds every pad field from the input record. Its two globals that could differ between machines (0x41bfc0, 0x41c138) are never written anywhere in the program | Observed | 0x174410; brute-force displacement search |
+| G6 | Box queries never return the copy; object run and draw loops skip whatever the exclude mask names (0x20000 while simulating, 0x200000 while predicting and drawing) | Observed | 0x14a928 lines for 0x20000 and the mask; iter_begin 0x1a1a48; runObjects 0x14b910 |
+| G7 | Player_dtor skips its global side effects while the copy is being torn down | Observed | 0x1a1be4 |
+| G8 | In Player_run, potion use and interact are guarded against the copy. The float at player record +0x4a5c is written without a guard, and nothing else reads it | Observed | 0x1b9cb8 first test; player_run.c line 689; 0x1a6200–0x1a629c, 0x1a8054–0x1a8084, 0x1bd904 |
+| G9 | Player_processDamage runs for the copy too. In the two PvP modes its tail gives the killer a third of their mana, may spawn an orb object and updates the score with no test for the copy; none of that is restored | Observed | 0x1b2cc0 tail (after 0x1b3504); mode flags 0x4f711c, 0x4f7120 written only by game setup 0x1e15f8, 0x1e1888 |
+| G10 | PvP games go out of sync when the local copy dies in prediction | Inferred | From G3 and G9; does not apply to the arena level |
+
+## Ruled out for the desync
+
+getEvil (D2); differing quest variables on a fresh launch (D4); uninitialised object memory
+(pool_new 0x14fdb8 zero-fills); Summon Skeleton's use of the unsynchronised seed (particles
+only, 0x2e194c–0x2e1e40); pathfinder timing (D5); party-wipe reload and save points (run in
+lockstep, 0x1e7438, 0x28d65c); the arena script's timed delays (D17); the copy sharing or
+deleting the real player's spells (G2); the copy being hit by boss projectiles, picked by
+Tagar's Insects, burned by FireStorm or tripping the arena's trigger volumes (G6; 0x1509f8,
+0x30d998, 0x2d470c, 0x1ecf3c); prediction leaving stale pad state (G5); the hit-flash flag
+0x100, which is moved to the copy after every tick but is read only by drawing (0x13af14,
+0x10b150); the "*inventoryOnNotify" script hook run when a menu opens (no level defines it); the knights'
+and Cazic's own AI functions reading camera, local-player or unsynchronised-seed state directly
+(Horsemen_run 0x27236c and 0x248598 read none; they use the per-object generator and the
+frame counter); Summon Skeleton treating a monster caster as a player slot (guarded by the
+is-player flag at 0x2e18a4, decompile lines for caster+0x3c8).
+
+## Tools added for this
+
+Ghidra 12.1.4 with ghidra-emotionengine-reloaded 2.1.38 (project in ghidra/proj, decompiles in
+decomp/). ghidra_funcs.tsv is Ghidra's function table (7,388 functions). tools/fieldxref.py
+lists loads and stores at a struct offset; tools/flagxref.py finds tests of a flag bit;
+tools/gxref.py lists reads and writes of a global; tools/ghostreach.py walks direct calls
+from a function and lists the globals each reachable function writes, marking the ones that
+never test for the prediction copy. From Player_run it reaches 812 functions (206 virtual
+call sites are not followed) writing 563 globals; the player-record writers in that set have
+been read, the rest have not.
+
+## Lag
+
+| ID | Claim | Kind | Evidence |
+|---|---|---|---|
+| L1 | Gameplay traffic is peer to peer over SOE UdpLibrary; the lobby server is not in the path | Observed | strings + 0x329d58, upstream server source |
+| L2 | The reliable channel resends after about 300 ms + 1.25 × ping, capped at 8 s (library defaults, not overridden) | Observed | 0x32a6ac–0x32a764 |
+| L3 | A lost input packet therefore stalls every player for at least ~300 ms | Unknown | Whether per-frame input rides the reliable channel is not established |
+
+## What "source" the disc contains
+
+| ID | Claim | Kind | Evidence |
+|---|---|---|---|
+| S1 | No C/C++ source or headers are on the disc; 16,370 packed files are audio, animation, textures, models, worlds and data | Observed | inventory of all 940 lumps by extension |
+| S2 | The 120 level scripts are compiled bytecode that keeps entry-point names, imported built-in names and 8,829 source line markers; all 51 opcodes they use are decoded | Observed | scripts/*.txt (27,752 lines, no undecoded opcode), interpreter 0x13ecf8 |
+| S3 | The engine survives only as traces in the ELF: 8 engine file names (lump.cc, sound.cc, particle.cc, object.cc, mem.cc, game.cc, engine.cc, core.cc), 403 class names, 191 built-in names | Observed | strings_all.txt, rtti_classes.txt, table 0x403370 |
+| S4 | Two third-party components are identifiable by file name and assertion text: SOE UdpLibrary (5 .cpp, 2 .h) and LibTomCrypt AES (aes.c, aes_tab.c) | Observed | strings_all.txt |
+| S5 | STRIFE.GOB carries a stray build file reading "include /usr/local/bin/makeworld.mak" | Observed | STRIFE.GOB/makefile.uni |

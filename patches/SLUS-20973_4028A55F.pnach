@@ -1,0 +1,6 @@
+gametitle=Champions: Return to Arms (SLUS-20973) v2.00
+
+[Net test: cutscene audio sync off]
+author=reverse engineering test patch, untested on a running game
+description=Stops cutscenes from nudging the speaking character's animation clock toward the local audio stream position (cut_advance, 0x199448). Cosmetic effect: lip movement may drift from the voice line. Every player in a game must use the same setting.
+patch=1,EE,00199448,word,10000060
