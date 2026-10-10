@@ -1,0 +1,288 @@
+# area: creatures  (0x109d68-0x131d88)  Creature base class, AI helpers, Weapon holder classes, per-class clone functions
+# Slot numbers are vtable slots as numbered by tools/vtab.py (GameObject table at object+0x48). See docs/creatures.md.
+00109d68	Creature_ctor	(maxHp, this, typeName, pos, angle, classDef, props): GameObject_ctor, sets flag 0x20, hp +0x228/+0x22c, home +0x3b4; reads wait/hide/ShowName/Dead/HomeRange/pointblankrange/visualrange/visualarc/Scale/MiniBoss/IgnoreDamage/light1/light2/ambient
+0010a230	Creature_init	post-constructor setup, 69 callers: height from model bounds, 'dead' and 'change%d' properties, weapon element properties, runs initScript unless a cutscene is active
+0010a620	Creature_setStats	(f0..f4, this, rollHp): f0 scales hit points +0x228/+0x22c (when rollHp), f1 -> +0xe4, f2 -> damage range +0xd0/+0xd2, f3 -> +0xd4, f4 -> +0xd8; uses the level scale 0x4f714c, player count, boss rank and difficulty; one GameObject_rand
+0010a9c0	Creature_filterState	(this, int *state): rewrites a requested AI state for rooted (5), stunned (0x13) and attack-cooldown (0x10) creatures; clears the target when the result is 0; 65 callers
+0010ab18	creature_drawPropLight	called only from Creature_draw with the parsed light1/light2 property values; body not read
+0010acc8	Creature_applyTintPreset	(this, preset 0-11): raises the two colour quads at +0x90/+0x98 to a preset; called from Creature_draw with +0xa0
+0010bb08	Creature_turnToward	slot 26 (mode, Vec3 *pos): turns facing +0x38 toward pos (mode 1 = away) with angular velocity +0x110 limited by turn rate +0xb0 and the slow amount; callers read a 16-bit result that was not identified
+0010beb8	Creature_onDeath	slot 28 (quiet): clears follow flags, runs deathScript, drops 'dropitem', deletes undrawn creatures, PvP score, stops boss music
+0010bfc8	Creature_revive	slot 32 (withEffect): clears flags 0x9, full hp, state 0, cflag 0x100000000, runs resurrectScript
+0010c238	creature_canSeePoint	(minR, maxR, this, pos, facing, arc): arc and range test, then a terrain ray
+0010c410	creature_objInArcRange	(range, this, obj, arc): obj within arc of facing and within range, with a terrain ray
+0010c5b8	creature_canSeeObjEdge	(minR, maxR, lead, this, obj, facing, arc, rayMode): as creature_canSeeObj but the range test adds only the target radius
+0010c810	creature_canSeeObj	(minR, maxR, lead, this, obj, facing, arc, rayMode): arc + range (radii subtracted) + terrain ray; lead uses the target velocity +0x308
+0010ca70	creature_findPlayerInCone	(minR, maxR, this, facing, arc): uncharmed creatures scan g_players[0..n) for the nearest visible live player; charmed ones use the enemy scan
+0010cf78	creature_findEnemyInCone	(minR, maxR, this, facing, arc): box query, slot 20 score, +1 last attacker, +1 current target, nearest wins; needs a clear terrain ray
+0010d2a8	creature_isBlockedBy	(this, other): other is blocking (player +0x47f or cflag 0x200) and this stands in front of it
+0010d390	creature_inKnockdownAnim	true while the animation is one of the eight knockdown*.anm clips
+0010d4e0	creature_getGuardPoint	(dist, out, this): point dist from the ally (+0x238) toward the target (+0x234)
+0010d5e8	creature_allyInLineOfFire	(range, dist, this, target, prev): every 8th frame, sweeps toward the target and reports another object in the way
+0010d800	creature_countAlliesNear	(radius, this, pos): live creatures of the same side in a box
+0010d940	creature_bossRank	0 normal, 1 MiniBoss property (cflag bit 0), 2 for a fixed list of type names at +0x34 (AntQueen, Innoruuk, raloszek, ...)
+0010dbe0	creature_bossMusicName	type name +0x34 -> boss music stream name, or 0
+0010de10	Creature_isSameTeam	slot 22 (other): both have a team (player record +0x4c24, or charm team +0x310 while charmed) and they match; never true for the prediction copy
+0010ded0	Creature_pickTarget	slot 23 (force): target selection every 32nd frame staggered by serial +0x230; box query of HomeRange with the exclude mask forced to 8; score = slot 20 + last attacker + current target, nearest wins; leash to home +0x3b4
+0010e2c0	Creature_pickAlly	slot 24: same scheme for the ally handle +0x238 using slot 21, box around home
+0010e658	Creature_canSeeTarget	slot 25 (force): target inside pointblankrange all round, or inside visualrange within visualarc
+0010eaa8	creature_findClearHeading	(dist, this, pos, heading, clockwise): rotates the heading in 0x800 steps (max 32) until three parallel sweeps are clear
+0010eed8	Creature_isAwayFromHome	distance from home +0x3b4 above 48 (path follower), 120 (following a player) or 0.666 x HomeRange
+0010f008	creature_findCorpseOfClass	(radius, this): a dead, drawn creature of the same class whose death animation has finished
+0010f190	creature_findWoundedAlly	(radius, this): live ally (slot 21) below half hit points
+0010f2c8	Creature_dropLoot	49 callers; skipped for revived creatures and the 'noloot' property; per-class tests then GameObject_rand rolls; body only skimmed
+00110760	Creature_spawnPartProp	(this, part, attach, flags, def): creates a 0x248-byte PhProp from a model part at a bone position; no direct callers found
+001108a0	Creature_deadUpdate	(height, this, animEvents, offset, noBlood): corpse handling in state 0x14: sink and delete (cflag 0x1000000), blood decals by cflags 0x1000/0x2000/0x4000/0x40000 using GameObject_rand
+00110b58	Creature_randomPointNearHome	(out, this, radius): up to 10 GameObject_rand tries for a point near home on similar ground height
+00110d30	Creature_processDamage	(this, model): consumes pending damage +0xc8/+0x2dc: hit effects, gibs (0x268-byte GutChunk), death -> state 0x14, flags 0x2009, xp and loot; 66 callers
+001124e0	players_findNearestOnTeam	(maxDist, pos, team): slot of the nearest live player whose record team byte matches (-1 = any), else 0xff
+001125e0	Creature_spawnScavenger	called every frame from Creature_run: a finished corpse that has just become active draws g_randSeed and creates a raven/rat Critter (0x402768 selects which)
+00113c48	Creature_moveBy	(this, Vec3 *vel): adds root motion, terrain slide, object push-out and slot 6 calls, gravity; result bits 1 wall (slot 10), 2 objects (slot 11), 4 landed; 39 callers
+001143e8	Creature_moveToTarget	moves to a point just outside the target's radius; state 0 when there is no target
+00114510	Creature_moveTo	(this, Vec3 *dest): path following, steering point +0x2ec, speed +0xb8, stuck detection (+0x2c8/+0x2d4/+0x2d8) with a random side step and a free-spot teleport; returns 1 on arrival
+001155e0	Creature_moveToDirect	(this, Vec3 *dest): as Creature_moveTo without the path finder
+00115910	Creature_fleeFrom	(this, other, mode): keeps a flee destination at +0xf8 and moves along a path away from other
+00115eb8	Creature_applyKnockback	(scale, this): pushes along +0x2e0 with speed +0x2e8 (decays by 2); players get none in a net game; dust uses GameObject_rand; 67 callers
+001162b0	Creature_stepAnim	(rate, this): advances the animation at +0x114, converts root motion into +0xbc/+0xc0/+0xc4, scaled by slow amount and +0xdc; 69 callers
+001164c0	Creature_requestPath	(x, radius, this, dest, mode): queues one of four path searches into the waypoint buffer +0x23c and marks the path pending (+0x2bc = 16)
+00116638	Creature_takeDamage	slot 2 (amount, this, attacker, flags): hp -= amount, pending +0xc8 += amount, +0x2dc |= flags, hit angle +0x2e0, last attacker handle +0x2e4 (owner of a 0x80 object)
+00116780	Creature_saveState	slot 9 (buf): variant +0xe8, hp fraction, animation name when dead, flag bits, charm timer; returns the size
+00116920	Creature_loadState	slot 8 (buf): inverse of Creature_saveState; a dead record puts the creature in state 0x14 with flags 0x2009
+00116bd8	Creature_interact	slot 14 (playerSlot): 'shop' opens the shop for a local slot, otherwise sets g_scriptActivePlayer and runs dialogScript when the player stands in front
+00116d50	Creature_interactPrompt	slot 13 (text, playerSlot): prompt text for a named creature (TalkTo / UpToShop / CannotTalk)
+00117230	Creature_emitLinkParticles	(this, other): 100 particles between random bones of the two models, chosen with GameObject_rand; reached through animation-event tables
+001175c0	Creature_aimAngleAtTarget	(projSpeed, this): angle to the target led by its velocity (players only) plus a GameObject_rand spread
+001176e0	creature_buildElementDamage	(this, damageDesc, element): adds an elemental entry (type 0x15.. ) scaled from a skill table entry and the level scale; one g_randSeed draw; 27 callers
+00117d30	creature_dropHeldPartAsProp	(x, part, creature, def, flags): turns a held model part into a 0x248-byte PhProp; called from slot 11 of the three Weapon classes
+00117e88	damageDesc_getElement	maps the entry types of a damage descriptor to 1-4 or 6
+00117f08	creature_drawHeldPart	(x, part, creature): draws a model part at its bone; called from slot 20 of the Weapon classes
+00118058	Weapon2_slot21	vtable slot 21 of Weapon2; weapon holder class (vtable at +0), not a GameObject; body not read
+00118378	creature_setDefEntryParams	(f0..f3, classDef, index, b0..b3): writes four float/byte pairs into resource entry 'index' of a class definition; 59 callers, all monster constructors
+00118410	Creature_slot18	empty; slot 18 is the 'set state' entry that script autoPropSetState calls on props
+00118418	Creature_getName	slot 19 (buf): 'mb_<class>' when usetypeidname is set, else the name property
+001185d8	Creature_scaleStats	(f0..f4, this): multiplies hit points and max by f0, +0xe4 by f1, +0xd0/+0xd2 by f2, +0xd4 by f3, +0xd8 by f4
+001186d8	creature_moveSimple	wrapper: obj_moveWithCollision(this, vel, 0, 0)
+00118738	Creature_getVisualPos	(out, this): position shifted by +0xe0 along the facing, height from the smoothed +0x3c
+001187e0	Creature_turnToTarget	calls slot 26 with the target position; 57 callers
+00118840	Creature_angleToTarget	signed angle between facing and the direction to the target
+001188a0	Creature_angleAllyToTarget	direction from the ally (+0x238) to the target (+0x234)
+001188f8	Creature_clearStatus	clears the charm, the timers +0x312..+0x31c, the five effect timers +0x340..+0x354 and the effect-source handle +0x360
+00118950	Creature_setEffectTimer	(seconds, this, which 0-4, source): sets +0x340/+0x344/+0x348/+0x34c/+0x350 and records the source object in +0x360
+001189f0	Creature_setCharm	(this, frames, team): monsters only: team +0x310, charm timer +0x312 (-1 = permanent), drops the target; used by script charmMonster and followPlayer
+00118a58	Creature_stun	slot 30 (frames, flash): not for bosses or the dead: +0x31c = frames, state 0x13
+00118af8	Creature_setNoTargetTimer	slot 31 (frames): not in PvP mode A, not for bosses: +0x316 = frames and the target is dropped; pickTarget refuses targets while it runs
+00118c50	Creature_slot35	returns (int)(level scale 0x4f714c * 0.3)
+00118c78	Creature_slot36	returns 4 for boss rank 1, 10 for rank 2, else 0
+00118cb0	Creature_targetInArcRange	creature_objInArcRange on the target
+00118cf0	Creature_canSeeTargetEdge	creature_canSeeObjEdge on the target
+00118d40	Creature_canSeeTargetIn	(minR, maxR, lead, this, facing, arc, rayMode): creature_canSeeObj on the target; 58 callers
+00118d90	Creature_canSeeAllyIn	creature_canSeeObj on the ally handle +0x238
+00118e90	Creature_isTargetAttackingMe	target is in an attack state (monster states 6-15, player +0x58c < 2) and its own target is this creature
+00118f08	Creature_isBlockedByTarget	creature_isBlockedBy on the target
+00118f90	Creature_isTargetCharging	target faces this creature and moves faster than 100 units/s
+00119038	Creature_isTargetRunningAway	target faces away and moves faster than 100 units/s
+001190e8	Creature_isTargetKnockedDown	player target playing a knockdown clip
+00119258	Creature_countAlliesNearTarget	creature_countAlliesNear at the target position
+001192b0	creature_startBossMusic	starts the stream from creature_bossMusicName
+001192f8	creature_stopBossMusic	
+00119328	Creature_isEnemy	slot 20 (other): 0 unless other is a live creature/player, not the prediction copy, not friendly (cflags 0x4000000, 0x800) and on a different team (slot 37); 4 when other has cflag 0x100000000000, else 1
+00119400	Creature_isAlly	slot 21 (other): same team by slot 37; players are never allies of players in PvP mode A
+001194d8	creature_probeHeading	(dist, this, pos, heading): fraction of a sweep that is free
+001195e0	Creature_isNotRooted	root timer +0x314 == 0; 64 callers
+001195f0	Creature_isAttackReady	attack cooldown +0x318 == 0 (reset when there is no target); 58 callers
+00119608	Creature_isNotStunned	stun timer +0x31c == 0; 59 callers
+00119618	Creature_pickWanderDest	sets the move destination +0x104 to a random point near home (radius 300, or 120 when following a player); 66 callers
+001196e8	Creature_hitTargetAtReach	(reach, this, min, max, ...): damages the target if it is within 60 units of the point 'reach' ahead
+00119850	Creature_hitTargetInArcEdge	arc test with creature_canSeeObjEdge, then the damage function 0x1e8230
+00119938	Creature_hitTargetInArc	(minR, maxR, this, facing, arc, min, max, ...): arc test with creature_canSeeObj, then the damage function; 24 callers
+00119a20	Creature_hitTargetOrPlayerInArc	hits the target if visible, else whatever creature_findPlayerInCone returns
+00119b58	Creature_hitAllEnemiesInArc	box query; damages every enemy (slot 20) that passes the arc test; 14 callers
+00119d10	Creature_knockbackTarget	(speed, this): writes the target's knockback speed +0x2e8 and angle +0x2e0
+00119d60	players_findFarthestWithin	(pos, range): slot of the live player farthest from pos but inside range, else 0xff
+00119e38	Creature_settle	zero-velocity Creature_moveBy with object flag 0x8000000 set, so an overlap restores the old position; 23 callers
+00119e98	Creature_moveToAlly	Creature_moveTo the ally handle; state 0 when there is none
+00119f08	Creature_fleeFromTarget	Creature_fleeFrom(this, target, mode); 56 callers
+00119f38	Creature_moveToDest	Creature_moveTo(+0x104); state 0 on arrival; after 4 failed paths picks a new wander point; 63 callers
+0011a020	Creature_getWaypoint	(out, this): current path waypoint or (-1,-1)
+0011a090	Creature_getNextWaypoint	(out, this): the waypoint after the current one
+0011a108	Creature_advanceWaypoint	steps to the next waypoint, or requests a new path when the buffer is exhausted
+0011a1e0	Creature_clearPath	resets waypoints, stuck tracking and the steering point; 71 callers
+0011a260	Creature_onPathResult	slot 7 (found): called by the path service; failure invalidates the buffer and counts in +0x2c4
+0011a290	Creature_slot12	empty; slot 12 is the 'something happened near you' entry called by world_notifyObjectsNear
+0011a2b8	world_notifyObjectsNear	(radius, a, Vec3 *pos, b): calls slot 12 of every object in a box; one caller, Creature_processDamage when there is a single player
+0011a3f0	Creature_slot10	empty; slot 10 is called by Creature_moveBy after hitting terrain
+0011a418	Creature_onTouch	slot 6 (other): a touching player sets cflag 0x800000000000000
+0011a448	Creature_slot11	empty; slot 11 receives the list of objects touched in Creature_moveBy
+0011a450	creatures_freezeAll	world_forEachRunObject(creature_freezeOne); called when a cutscene or the mission menu starts
+0011a470	creatures_unfreezeAll	world_forEachRunObject(0x11c150)
+0011a490	Creature_setWaiting	sets inert bit 1 in +0x231 and state 0
+0011a4f0	Creature_show	relinks to the grid, clears inert bit 8 and flag 0x8000
+0011a538	Creature_hide	moves to the off-grid list, sets inert bit 8 and flag 0x8000
+0011a578	Creature_freeze	sets inert bit 0x10, state 0, drops the target
+0011a5f0	Creature_trigger	slot 3: a named creature runs its dialogScript if the dialog latch 0x4fe53c is free
+0011a668	Creature_refreshVariant	slot 29: recomputes +0x220 from the model and the variant bits +0xe8
+0011a6d0	creature_removeSpellByType	finds an attached spell by type and deletes it
+0011a868	Creature_updateSpells	slot 17 (Vec3 *pos): calls slot 2 of every attached spell (+0x364) with the position and facing
+0011a920	creature_aimAngleAt	(projSpeed, this, target): lead for player targets plus a GameObject_rand spread of +-900
+0011aa30	creature_leadPoint	(projSpeed, this, target, out): predicted position of target at mid height
+0011aaf8	Creature_leadTargetPoint	(projSpeed, this, out): creature_leadPoint on the target handle; 16 callers
+0011afb0	Weapon1_slot1	vtable slot 1 of Weapon1 (hand, on): hand 1 sets +8 and bit 0 of +4; hand 2 (Weapon2, WeaponShield only) sets +0x98 and bit 1. Not a destructor
+0011aff0	Weapon1_slot8	vtable slot 8 of Weapon1; weapon holder class (vtable at +0), not a GameObject; body not read
+0011b020	Weapon1_slot9	vtable slot 9 of Weapon1; weapon holder class (vtable at +0), not a GameObject; body not read
+0011b050	Weapon1_slot10	vtable slot 10 of Weapon1; weapon holder class (vtable at +0), not a GameObject; body not read
+0011b080	Weapon1_slot11	vtable slot 11 of Weapon1; weapon holder class (vtable at +0), not a GameObject; body not read
+0011b0d0	Weapon1_slot12	vtable slot 12 of Weapon1; weapon holder class (vtable at +0), not a GameObject; body not read
+0011b0f0	Weapon1_slot13	vtable slot 13 of Weapon1; weapon holder class (vtable at +0), not a GameObject; body not read
+0011b110	Weapon1_slot14	vtable slot 14 of Weapon1; weapon holder class (vtable at +0), not a GameObject; body not read
+0011b130	Weapon1_slot15	vtable slot 15 of Weapon1; weapon holder class (vtable at +0), not a GameObject; body not read
+0011b148	Weapon1_slot16	vtable slot 16 of Weapon1; weapon holder class (vtable at +0), not a GameObject; body not read
+0011b180	Weapon1_slot17	vtable slot 17 of Weapon1; weapon holder class (vtable at +0), not a GameObject; body not read
+0011b198	Weapon1_slot18	vtable slot 18 of Weapon1; weapon holder class (vtable at +0), not a GameObject; body not read
+0011b208	Weapon1_slot19	vtable slot 19 of Weapon1 (shared with Weapon2, WeaponShield); weapon holder class (vtable at +0), not a GameObject; body not read
+0011b270	Weapon1_slot20	vtable slot 20 of Weapon1; weapon holder class (vtable at +0), not a GameObject; body not read
+0011b2a8	Weapon1_slot21	vtable slot 21 of Weapon1 (shared with WeaponShield); weapon holder class (vtable at +0), not a GameObject; body not read
+0011b3e8	Weapon1_slot22	vtable slot 22 of Weapon1 (shared with Weapon2, WeaponShield); weapon holder class (vtable at +0), not a GameObject; body not read
+0011b510	Weapon1_slot23	vtable slot 23 of Weapon1; weapon holder class (vtable at +0), not a GameObject; body not read
+0011b580	Weapon1_slot24	vtable slot 24 of Weapon1; weapon holder class (vtable at +0), not a GameObject; body not read
+0011b5f0	Weapon2_slot1	vtable slot 1 of Weapon2 (hand, on): hand 1 sets +8 and bit 0 of +4; hand 2 (Weapon2, WeaponShield only) sets +0x98 and bit 1. Not a destructor
+0011b668	Weapon2_slot9	vtable slot 9 of Weapon2; weapon holder class (vtable at +0), not a GameObject; body not read
+0011b6b8	Weapon2_slot10	vtable slot 10 of Weapon2; weapon holder class (vtable at +0), not a GameObject; body not read
+0011b708	Weapon2_slot11	vtable slot 11 of Weapon2; weapon holder class (vtable at +0), not a GameObject; body not read
+0011b7d8	Weapon2_slot12	vtable slot 12 of Weapon2; weapon holder class (vtable at +0), not a GameObject; body not read
+0011b818	Weapon2_slot13	vtable slot 13 of Weapon2; weapon holder class (vtable at +0), not a GameObject; body not read
+0011b858	Weapon2_slot14	vtable slot 14 of Weapon2; weapon holder class (vtable at +0), not a GameObject; body not read
+0011b898	Weapon2_slot15	vtable slot 15 of Weapon2; weapon holder class (vtable at +0), not a GameObject; body not read
+0011b8c8	Weapon2_slot16	vtable slot 16 of Weapon2; weapon holder class (vtable at +0), not a GameObject; body not read
+0011b920	Weapon2_slot17	vtable slot 17 of Weapon2; weapon holder class (vtable at +0), not a GameObject; body not read
+0011b948	Weapon2_slot18	vtable slot 18 of Weapon2; weapon holder class (vtable at +0), not a GameObject; body not read
+0011ba48	Weapon2_slot20	vtable slot 20 of Weapon2; weapon holder class (vtable at +0), not a GameObject; body not read
+0011bac0	Weapon2_slot23	vtable slot 23 of Weapon2; weapon holder class (vtable at +0), not a GameObject; body not read
+0011bb70	Weapon2_slot24	vtable slot 24 of Weapon2; weapon holder class (vtable at +0), not a GameObject; body not read
+0011bc18	WeaponShield_slot1	vtable slot 1 of WeaponShield (hand, on): hand 1 sets +8 and bit 0 of +4; hand 2 (Weapon2, WeaponShield only) sets +0x98 and bit 1. Not a destructor
+0011bc90	WeaponShield_slot11	vtable slot 11 of WeaponShield; weapon holder class (vtable at +0), not a GameObject; body not read
+0011bd60	WeaponShield_slot12	vtable slot 12 of WeaponShield; weapon holder class (vtable at +0), not a GameObject; body not read
+0011bda0	WeaponShield_slot13	vtable slot 13 of WeaponShield; weapon holder class (vtable at +0), not a GameObject; body not read
+0011bde0	WeaponShield_slot14	vtable slot 14 of WeaponShield; weapon holder class (vtable at +0), not a GameObject; body not read
+0011be20	WeaponShield_slot17	vtable slot 17 of WeaponShield; weapon holder class (vtable at +0), not a GameObject; body not read
+0011be40	WeaponShield_slot18	vtable slot 18 of WeaponShield; weapon holder class (vtable at +0), not a GameObject; body not read
+0011bf40	WeaponShield_slot20	vtable slot 20 of WeaponShield; weapon holder class (vtable at +0), not a GameObject; body not read
+0011bfb8	WeaponShield_slot23	vtable slot 23 of WeaponShield; weapon holder class (vtable at +0), not a GameObject; body not read
+0011c048	WeaponShield_slot24	vtable slot 24 of WeaponShield; weapon holder class (vtable at +0), not a GameObject; body not read
+0011c0d0	creature_freezeOne	callback: non-player creature with +0x231 == 0 gets inert bit 0x10, state 0 and loses its target
+0011c150	creature_unfreezeOne	callback: clears inert bit 0x10 on non-player creatures
+0011c1a0	GameObject_clone	slot 15 of plain GameObject and 55 other classes that add no fields: 0x4c bytes, handle lists start empty
+0011c7f8	Projectile_clone	slot 15 of Projectile: copy constructor into a new 0x54-byte block; base chain GameObject
+0011c910	Prop_clone	slot 15 of Prop: copy constructor into a new 0x148-byte block; base chain GameObject
+0011cb70	ParticleProp_clone	slot 15 of ParticleProp: copy constructor into a new 0x148-byte block; base chain GameObject > Prop
+0011cdd8	ItemProp_clone	slot 15 of ItemProp: copy constructor into a new 0x190-byte block; base chain GameObject > Prop
+0011d080	PhProp_clone	slot 15 of PhProp: copy constructor into a new 0x248-byte block; base chain GameObject > Prop
+0011d458	PhIce_clone	slot 15 of PhIce: copy constructor into a new 0x250-byte block; base chain GameObject > Prop > PhProp
+0011d850	Gold_clone	slot 15 of Gold: copy constructor into a new 0xc0-byte block; base chain GameObject
+0011d9c0	Container_clone	slot 15 of Container: copy constructor into a new 0x84-byte block; base chain GameObject
+0011db30	Ice_clone	slot 15 of Ice: copy constructor into a new 0x68-byte block; base chain GameObject
+0011dc68	Chest_clone	slot 15 of Chest: copy constructor into a new 0x88-byte block; base chain GameObject
+0011dda8	CosmeticPropAnim_clone	slot 15 of CosmeticPropAnim: copy constructor into a new 0x98-byte block; base chain GameObject
+0011df00	CosmeticProp_clone	slot 15 of CosmeticProp: copy constructor into a new 0x60-byte block; base chain GameObject
+0011e028	UserParamProp_clone	slot 15 of UserParamProp: copy constructor into a new 0x170-byte block; base chain GameObject
+0011e160	TriggerParams_clone	slot 15 of TriggerParams: copy constructor into a new 0x50-byte block; base chain GameObject
+0011e268	Trigger_clone	slot 15 of Trigger: copy constructor into a new 0x70-byte block; base chain GameObject
+0011e3b8	Blocker_clone	slot 15 of Blocker: copy constructor into a new 0x4c-byte block; base chain GameObject
+0011e4b8	VehicleBodySphere_clone	slot 15 of VehicleBodySphere: copy constructor into a new 0x54-byte block; base chain GameObject
+0011e5c8	WaveMaker_clone	slot 15 of WaveMaker: copy constructor into a new 0x768-byte block; base chain GameObject
+0011e770	PushTrigger_clone	slot 15 of PushTrigger: copy constructor into a new 0x4c-byte block; base chain GameObject
+0011f188	Ant_clone	slot 15 of Ant: copy constructor into a new 0x3e8-byte block; base chain GameObject > Creature
+0011f728	AntQueen_clone	slot 15 of AntQueen: copy constructor into a new 0x3e8-byte block; base chain GameObject > Creature
+0011fcd0	AntWave_clone	slot 15 of AntWave: copy constructor into a new 0x3d8-byte block; base chain GameObject > Creature
+00120250	Badger_clone	slot 15 of Badger: copy constructor into a new 0x3d0-byte block; base chain GameObject > Creature
+001207c8	BlackWidow_clone	slot 15 of BlackWidow: copy constructor into a new 0x420-byte block; base chain GameObject > Creature
+00120df8	Critter_clone	slot 15 of Critter: copy constructor into a new 0x448-byte block; base chain GameObject > Creature
+00121460	Cyclops_clone	slot 15 of Cyclops: copy constructor into a new 0x458-byte block; base chain GameObject > Creature
+00121a98	FemaleDarkElf_clone	slot 15 of FemaleDarkElf: copy constructor into a new 0x478-byte block; base chain GameObject > Creature
+00122120	FireBeetle_clone	slot 15 of FireBeetle: copy constructor into a new 0x430-byte block; base chain GameObject > Creature
+00122700	FireFly_clone	slot 15 of FireFly: copy constructor into a new 0x470-byte block; base chain GameObject > Creature > FireBeetle
+00122d90	Froglock_clone	slot 15 of Froglock: copy constructor into a new 0x468-byte block; base chain GameObject > Creature
+00123408	Generator_clone	slot 15 of Generator: copy constructor into a new 0x3e8-byte block; base chain GameObject > Creature
+001239a8	Ghoul_clone	slot 15 of Ghoul: copy constructor into a new 0x3d8-byte block; base chain GameObject > Creature
+00123f28	Gnome_clone	slot 15 of Gnome: copy constructor into a new 0x3d8-byte block; base chain GameObject > Creature
+001244b0	Goblin_clone	slot 15 of Goblin: copy constructor into a new 0x498-byte block; base chain GameObject > Creature
+00124b78	LavaMonster_clone	slot 15 of LavaMonster: copy constructor into a new 0x430-byte block; base chain GameObject > Creature
+00125160	MaleDarkElf_clone	slot 15 of MaleDarkElf: copy constructor into a new 0x4f8-byte block; base chain GameObject > Creature
+001258a0	Orc_clone	slot 15 of Orc: copy constructor into a new 0x488-byte block; base chain GameObject > Creature
+00125f48	Scorpion_clone	slot 15 of Scorpion: copy constructor into a new 0x3d0-byte block; base chain GameObject > Creature
+001264b8	Skeleton_clone	slot 15 of Skeleton: copy constructor into a new 0x478-byte block; base chain GameObject > Creature
+00126b58	Skelight_clone	slot 15 of Skelight: copy constructor into a new 0x468-byte block; base chain GameObject > Creature
+001271c0	SpiderQueen_clone	slot 15 of SpiderQueen: copy constructor into a new 0x430-byte block; base chain GameObject > Creature
+001277f8	SmallSpider_clone	slot 15 of SmallSpider: copy constructor into a new 0x3c8-byte block; base chain GameObject > Creature
+00127d60	CdEyeball_clone	slot 15 of CdEyeball: copy constructor into a new 0x3d0-byte block; base chain GameObject > Creature
+001282d8	UndeadKnight_clone	slot 15 of UndeadKnight: copy constructor into a new 0x478-byte block; base chain GameObject > Creature
+00128978	Vampire_clone	slot 15 of Vampire: copy constructor into a new 0x3c8-byte block; base chain GameObject > Creature
+00128ee0	VampireLord_clone	slot 15 of VampireLord: copy constructor into a new 0x480-byte block; base chain GameObject > Creature
+00129568	WoodElfSoldier_clone	slot 15 of WoodElfSoldier: copy constructor into a new 0x3e8-byte block; base chain GameObject > Creature
+00129b18	Wraith_clone	slot 15 of Wraith: copy constructor into a new 0x3d8-byte block; base chain GameObject > Creature
+0012a098	NPC_clone	slot 15 of NPC: copy constructor into a new 0x480-byte block; base chain GameObject > Creature
+0012a6f0	GutChunk_clone	slot 15 of GutChunk: copy constructor into a new 0x268-byte block; base chain GameObject > Prop > PhProp
+0012ab10	LooseIceChunk_clone	slot 15 of LooseIceChunk: copy constructor into a new 0x248-byte block; base chain GameObject > Prop > PhProp
+0012aef8	Torch_clone	slot 15 of Torch: copy constructor into a new 0x8c-byte block; base chain GameObject
+0012b0b0	Fire_clone	slot 15 of Fire: copy constructor into a new 0x50-byte block; base chain GameObject
+0012b1b8	FlyingText_clone	slot 15 of FlyingText: copy constructor into a new 0x98-byte block; base chain GameObject
+0012b368	Candle_clone	slot 15 of Candle: copy constructor into a new 0x94-byte block; base chain GameObject
+0012b528	Candle2_clone	slot 15 of Candle2: copy constructor into a new 0x50-byte block; base chain GameObject
+0012b638	Lantern_clone	slot 15 of Lantern: copy constructor into a new 0x98-byte block; base chain GameObject
+0012b800	Lamp_clone	slot 15 of Lamp: copy constructor into a new 0x8c-byte block; base chain GameObject
+0012b9b0	FireEffect_clone	slot 15 of FireEffect: copy constructor into a new 0x58-byte block; base chain GameObject
+0012bad8	RecallEffect_clone	slot 15 of RecallEffect: copy constructor into a new 0x60-byte block; base chain GameObject
+0012bc08	IceChunk_clone	slot 15 of IceChunk: copy constructor into a new 0x50-byte block; base chain GameObject
+0012bd10	FrostStormSpell_clone	slot 15 of FrostStormSpell: copy constructor into a new 0xac-byte block; base chain GameObject
+0012bf00	GlowingCylinder_clone	slot 15 of GlowingCylinder: copy constructor into a new 0x70-byte block; base chain GameObject
+0012c050	GlowingShaft_clone	slot 15 of GlowingShaft: copy constructor into a new 0x5c-byte block; base chain GameObject
+0012c178	MissileTrap_clone	slot 15 of MissileTrap: copy constructor into a new 0x50-byte block; base chain GameObject
+0012c288	Shooter_clone	slot 15 of Shooter: copy constructor into a new 0x58-byte block; base chain GameObject
+0012c3d8	WaterSpout_clone	slot 15 of WaterSpout: copy constructor into a new 0x5c-byte block; base chain GameObject
+0012c500	DummyDamager_clone	slot 15 of DummyDamager: copy constructor into a new 0x74-byte block; base chain GameObject > Projectile
+0012c668	Sparks_clone	slot 15 of Sparks: copy constructor into a new 0xb8-byte block; base chain GameObject > Projectile
+0012c878	HolyBolt_clone	slot 15 of HolyBolt: copy constructor into a new 0xc0-byte block; base chain GameObject > Projectile
+0012ca98	OniBall_clone	slot 15 of OniBall: copy constructor into a new 0xb8-byte block; base chain GameObject > Projectile
+0012cca8	LostSoul_clone	slot 15 of LostSoul: copy constructor into a new 0xb0-byte block; base chain GameObject > Projectile
+0012cea8	Root_clone	slot 15 of Root: copy constructor into a new 0xc0-byte block; base chain GameObject > Projectile
+0012d0c8	UnholyAura_clone	slot 15 of UnholyAura: copy constructor into a new 0xa0-byte block; base chain GameObject
+0012d2a0	IceBall_clone	slot 15 of IceBall: copy constructor into a new 0xac-byte block; base chain GameObject > Projectile
+0012d498	MissileWeapon_clone	slot 15 of MissileWeapon: copy constructor into a new 0x1c8-byte block; base chain GameObject > Projectile
+0012d878	AnimatedMissile_clone	slot 15 of AnimatedMissile: copy constructor into a new 0x98-byte block; base chain GameObject > Projectile
+0012d9e0	playerProjectile_clone	slot 15 of playerProjectile: copy constructor into a new 0x1d0-byte block; base chain GameObject > Projectile > MissileWeapon
+0012dde8	beetleProjectile_clone	slot 15 of beetleProjectile: copy constructor into a new 0x1d0-byte block; base chain GameObject > Projectile > MissileWeapon
+0012e1e0	WebTrap_clone	slot 15 of WebTrap: copy constructor into a new 0xa0-byte block; base chain GameObject
+0012e390	LooseFire_clone	slot 15 of LooseFire: copy constructor into a new 0x54-byte block; base chain GameObject
+0012e4a8	GroundPoundEffect_clone	slot 15 of GroundPoundEffect: copy constructor into a new 0x9c-byte block; base chain GameObject
+0012e690	LightEffect_clone	slot 15 of LightEffect: copy constructor into a new 0xbc-byte block; base chain GameObject
+0012e8a0	Player1_clone	slot 15 of Player1: copy constructor into a new 0x4c-byte block; base chain GameObject
+0012e9a0	charAmbient_Light_clone	slot 15 of charAmbient_Light: copy constructor into a new 0x4c-byte block; base chain GameObject
+0012eaa0	charDirectional_Light_clone	slot 15 of charDirectional_Light: copy constructor into a new 0x4c-byte block; base chain GameObject
+0012eba0	charDirectional_LightD_clone	slot 15 of charDirectional_LightD: copy constructor into a new 0x4c-byte block; base chain GameObject
+0012eca0	WorldPart_clone	slot 15 of WorldPart: copy constructor into a new 0x50-byte block; base chain GameObject
+0012edb0	DoorSwing_clone	slot 15 of DoorSwing: copy constructor into a new 0x5c-byte block; base chain GameObject
+0012eed8	RollDoor_clone	slot 15 of RollDoor: copy constructor into a new 0x5c-byte block; base chain GameObject
+0012f008	DoorSecret_clone	slot 15 of DoorSecret: copy constructor into a new 0x5c-byte block; base chain GameObject
+0012f138	Switch_clone	slot 15 of Switch: copy constructor into a new 0x50-byte block; base chain GameObject
+0012f248	FloorSwitch_clone	slot 15 of FloorSwitch: copy constructor into a new 0x58-byte block; base chain GameObject
+0012f368	FallPlatform_clone	slot 15 of FallPlatform: copy constructor into a new 0x70-byte block; base chain GameObject
+0012f4c8	FireTrail_clone	slot 15 of FireTrail: copy constructor into a new 0x64-byte block; base chain GameObject
+0012f600	FireTrailMaker_clone	slot 15 of FireTrailMaker: copy constructor into a new 0x70-byte block; base chain GameObject
+0012f768	Savepoint_clone	slot 15 of Savepoint: copy constructor into a new 0x118-byte block; base chain GameObject
+0012f9b0	JumpGate_clone	slot 15 of JumpGate: copy constructor into a new 0x164-byte block; base chain GameObject
+0012fc48	FireBomb_clone	slot 15 of FireBomb: copy constructor into a new 0x58-byte block; base chain GameObject
+0012fd78	FireBomblet_clone	slot 15 of FireBomblet: copy constructor into a new 0xb8-byte block; base chain GameObject
+0012ff98	FireBombletJr_clone	slot 15 of FireBombletJr: copy constructor into a new 0x70-byte block; base chain GameObject
+001300e0	StaticFire_clone	slot 15 of StaticFire: copy constructor into a new 0x4ac-byte block; base chain GameObject
+00130368	PokeReflector_clone	slot 15 of PokeReflector: copy constructor into a new 0x4c-byte block; base chain GameObject
+00130468	Lever_clone	slot 15 of Lever: copy constructor into a new 0x54-byte block; base chain GameObject
+00130580	Counter_clone	slot 15 of Counter: copy constructor into a new 0x50-byte block; base chain GameObject
+00130688	Timer_clone	slot 15 of Timer: copy constructor into a new 0x54-byte block; base chain GameObject
+00130798	ShopDaemon_clone	slot 15 of ShopDaemon: copy constructor into a new 0x50-byte block; base chain GameObject
+001308a0	WeaponRack_clone	slot 15 of WeaponRack: copy constructor into a new 0x98-byte block; base chain GameObject
+00130f58	poisonGasSpell_clone	slot 15 of poisonGasSpell: copy constructor into a new 0x70-byte block; base chain GameObject
+001310a8	dustCloud_clone	slot 15 of dustCloud: copy constructor into a new 0x6c-byte block; base chain GameObject
+001311e8	PointSourceSound_clone	slot 15 of PointSourceSound: copy constructor into a new 0x68-byte block; base chain GameObject
+00131320	PushPhysicsProp_clone	slot 15 of PushPhysicsProp: copy constructor into a new 0x118-byte block; base chain GameObject
+00131570	StrongStancePhantom_clone	slot 15 of StrongStancePhantom: copy constructor into a new 0x3d8-byte block; base chain GameObject > Creature
+00131b00	net_sendMsgToPeers	(type, peerMask, buf, len): net games only; remote peers get it through the UDP connection, a local slot gets the handler table 0x5d14e0 called directly. Sits after the clone functions, outside the Creature code
+00131cb8	net_kickPeer	(peer): for a remote peer not already flagged: prints the NET KICK line, sets peer +0x44d6 and a pending word at 0x5d1450
