@@ -20,5 +20,5 @@ understood: see the area document in `docs/` for what has actually been read.
 | skills | 2c3cd4–320000 | 982 | 865 | 89% | Skill and Spell classes |
 | mainloop | 320000–323dcc | 39 | 39 | 100% | task scheduler and main loop |
 | netlib | 323dcc–3b0000 | 2066 | 385 | 32% | lobby client, SOE UdpLibrary, AES, Sony SDK libraries |
-| runtime | 3b0000–3e6000 | 1460 | 0 | 0% | C and C++ runtime, type info, static constructors |
-| **all** | | 7732 | 3766 | 70% | |
+| runtime | 3b0000–3e6000 | 1460 | 1137 | 68% | C and C++ runtime, type info, static constructors |
+| **all** | | 7732 | 4903 | 75% | |
