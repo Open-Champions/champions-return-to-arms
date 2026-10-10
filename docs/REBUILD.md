@@ -1,18 +1,14 @@
 # Rebuild workflow
 
-This project has two complementary targets. Keep their source, verification results
-and completion claims separate.
+This repository owns the Return to Arms PS2 source reconstruction: independently
+authored C++ verified against the identified original executable, one complete function
+at a time. The [research repository](https://github.com/Open-Champions/champions-return-to-arms-re)
+owns reverse-engineering maps and findings. The [separate Norrath reconstruction](https://github.com/Open-Champions/champions-of-norrath)
+owns the first game's baseline. The [shared Godot implementation](https://github.com/Open-Champions/open-champions-godot)
+owns native Mac and Windows gameplay for both games. Those are separate proof boundaries.
 
-| Target | Intended result | Required evidence |
-|---|---|---|
-| PS2 preservation | Authored source that reproduces the original R5900 executable's behavior and, where claimed, its exact machine bytes | Compiler-produced complete function matches first; reproducible whole-program linking and runtime checks remain separate milestones |
-| Native Godot client | Play Champions on native Mac and Windows builds using the user's original data | Authored portable behavior, decoded resources, working Godot integration, target-platform execution and gameplay tests |
-
-The Godot 4 and portable C++ direction in [NATIVE_PORT.md](NATIVE_PORT.md) remains
-in place. Matching one PS2 function does not make it directly usable as a host-native
-function. Conversely, a correct native implementation may deliberately generate
-entirely different instructions. The existing native archive inspector is useful
-working infrastructure; it is not a rebuilt game engine.
+Read [ORIGIN.md](../ORIGIN.md) for the retained history and frozen function-index snapshot.
+No native game build, executable reconstruction or gameplay completion is claimed here.
 
 ## What we take from BFME1
 
@@ -45,7 +41,7 @@ your own disc private. Do not change the expected hash to accept a different edi
 a patched executable or a generated candidate. Model another edition as a separate
 reviewed target if it is ever needed.
 
-**Current blocker:** [OVERVIEW.md](OVERVIEW.md) identifies GCC 2.9x-era C++ conventions,
+**Current blocker:** [the research overview](https://github.com/Open-Champions/champions-return-to-arms-re/blob/main/docs/OVERVIEW.md) identifies GCC 2.9x-era C++ conventions,
 but the exact original EE compiler build, options, SDK headers/libraries and linker
 recipe have not been established. A generic modern MIPS compiler, or host Clang
 compiling C++ successfully, does not settle this. The PS2 target needs the correct
@@ -229,5 +225,4 @@ compiler can reproduce it from authored source. The initial command interface us
 Clang flags, disables implicit compiler configuration, and accepts a reviewed subset
 of options; it is not yet an adapter for the original EE compiler. Record an honest mismatch when it
 cannot. Settling compiler/ABI differences is useful work even when matched progress
-remains zero. In parallel, continue the native Godot real-asset milestone using the
-existing archive core; neither lane should wait for misleading claims from the other.
+remains zero. Native Godot work continues in its own repository; it does not add matching credit here.

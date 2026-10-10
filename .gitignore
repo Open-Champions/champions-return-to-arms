@@ -1,49 +1,13 @@
-# Whitelist: nothing from the game may be committed. Everything is ignored unless listed here.
+# Only reviewed authored sources, bounded metadata and documentation may be tracked.
 /*
 !/.gitignore
 !/.gitattributes
 !/README.md
-!/CONTRIBUTING.md
 !/AGENTS.md
+!/CONTRIBUTING.md
+!/ORIGIN.md
 !/LICENSE
-!/FINDINGS.md
-!/names.tsv
-!/rtti_classes.txt
-!/vtables.txt
 !/ghidra_funcs.tsv
-!/docs/
-!/symbols/
-!/tools/
-!/patches/
-!/ghidra/
-/ghidra/*
-!/ghidra/scripts/
-__pycache__/
-*.pickle
-*.pyc
-.DS_Store
-
-# Community automation and contributor templates only.
-!/.github/
-/.github/*
-!/.github/workflows/
-!/.github/ISSUE_TEMPLATE/
-/.github/workflows/*
-!/.github/workflows/tools.yml
-/.github/ISSUE_TEMPLATE/*
-!/.github/ISSUE_TEMPLATE/research.md
-!/.github/ISSUE_TEMPLATE/runtime-bug.md
-
-# Authored native sources; build outputs and game-derived data remain ignored.
-!/native/
-/native/*
-!/native/CMakeLists.txt
-!/native/README.md
-!/native/include/
-!/native/src/
-!/native/tests/
-
-# Authored reconstruction sources and metadata only; no retail or compiler binaries.
 !/reconstructed/
 /reconstructed/*
 !/reconstructed/*.cpp
@@ -54,3 +18,23 @@ __pycache__/
 /targets/SLUS-20973/*
 !/targets/SLUS-20973/rebuild.json
 !/targets/SLUS-20973/verification.json
+!/tools/
+/tools/*
+!/tools/rebuild.py
+!/tools/rebuild_claims.py
+!/tools/rebuild_gate.py
+!/tools/test_rebuild.py
+!/tools/test_rebuild_claims.py
+!/tools/test_rebuild_gate.py
+!/docs/
+/docs/*
+!/docs/REBUILD.md
+!/docs/rebuild-progress.svg
+!/.github/
+/.github/*
+!/.github/workflows/
+/.github/workflows/*
+!/.github/workflows/tools.yml
+__pycache__/
+*.pyc
+.DS_Store

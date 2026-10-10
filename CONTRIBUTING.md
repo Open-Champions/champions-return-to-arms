@@ -1,79 +1,50 @@
 # Contributing
 
-Everyone is welcome, whatever your experience. This is a large job and it only gets done
-if many people can add small, trustworthy pieces.
+Help reconstruct one complete Return to Arms PS2 function at a time. Read
+[the workflow](docs/REBUILD.md), [agent instructions](AGENTS.md), and the
+[snapshot provenance](ORIGIN.md). Coordinate substantial work in an issue and reserve
+individual entries through the checkout-local claim tool.
+
+## What belongs here
+
+Independently authored, readable C++ goes in `reconstructed/`. The target ledger
+records exact extents, compiler options and evidence. Sanitized verification receipts
+contain hashes and results, never original bytes. Keep speculative attempts in ignored
+`work/` until their status is clear.
+
+Subsystem research belongs in the [research repository](https://github.com/Open-Champions/champions-return-to-arms-re).
+Native Godot behavior for both games belongs in [Open Champions Godot](https://github.com/Open-Champions/open-champions-godot).
+Norrath has its own [reconstruction repository](https://github.com/Open-Champions/champions-of-norrath).
 
 ## What may not be committed
 
-Nothing that comes from the game:
+Do not publish game executables, disc images, BIOS files, extracted models/textures/audio,
+level files, compiled scripts, original object files, raw disassembly or raw decompiler
+output. Proprietary SDK/toolchain files stay private. The `.gitignore` is a whitelist;
+do not weaken it to add a reference file.
 
-- the executable, the disc image, or anything unpacked from it (models, textures, audio,
-  level files, compiled scripts);
-- full disassembly or raw decompiler output;
-- game text such as dialogue.
+Address metadata, independently chosen identifiers, verified struct layouts, original
+explanations and authored C++ are welcome. This repository retains earlier research
+history; [ORIGIN.md](ORIGIN.md) explains the separation and current ownership.
 
-What is fine: addresses, names you chose, struct layouts, descriptions in your own words,
-pseudo-code you wrote yourself, and short identifiers the game exposes (class names, script
-command names, file names). The `.gitignore` is a whitelist to make mistakes hard; do not
-weaken it.
+## Evidence and review
 
-Independently authored C++ reconstructions are also welcome under `reconstructed/`,
-with the evidence and byte verification described in [REBUILD.md](docs/REBUILD.md).
-This does not permit copying raw decompiler output, embedded instruction bytes, game
-assets, or proprietary compiler files. The original executable stays local. Consult
-[AGENTS.md](AGENTS.md) for ownership claims and the function-by-function workflow.
+Mark claims **Observed**, **Inferred**, or **Unknown** and provide addresses or a
+reproducible check. A proposed name costs more than a missing one when others build on
+it. A complete constant-return leaf can be valid; an invented placeholder cannot.
+Do not claim playability, whole-game linking or runtime-tested behavior from a function
+match or metadata check.
 
-## The one rule about claims
+For a reconstruction change:
 
-Say how you know. Every statement in `FINDINGS.md` and the area documents is one of:
+1. Establish the whole body, callers and dependencies; preserve unresolved questions.
+2. Compile from current authored source and compare against the pinned private baseline.
+3. Include the function's source, ledger update, sanitized receipt and refreshed chart
+   in one focused review. State the address, complete extent, actual byte gain and command.
+4. Run all synthetic tests, ledger checks and chart regeneration. A saved receipt must
+   match current source, flags, index and verifier fingerprints.
 
-- **Observed** — you read it in the bytes at the address you give.
-- **Inferred** — it follows from observations, but you did not see it directly.
-- **Unknown** — not established; say what would settle it.
-
-A wrong name costs more than a missing one, because people build on it. If you are not
-sure what a function is, leave it unnamed or name only what you can prove
-(`creature_setField2fc` beats `creature_applySlow` until you have seen who reads the
-field). Nothing counts as confirmed on a running game unless someone ran it and says so.
-
-## Adding symbols
-
-Symbols are tab-separated: address in hex without `0x`, name, optional note.
-
-```
-001b9cb8	Player_usePotion	guarded against the prediction copy; menu path differs for the local player
-```
-
-- Put them in `symbols/<area>.tsv`, where the area is one from `docs/STATUS.md`.
-  `names.tsv` is the original core list; fix mistakes there but add new work under
-  `symbols/`.
-- Functions: `Class_method` for members, `subsystem_verbNoun` otherwise. Globals: `g_name`.
-- The note should carry the evidence or the caveat.
-- Run `python3 tools/symtab.py check` (no conflicts, no malformed lines) and
-  `python3 tools/coverage.py --write` before you open a pull request.
-
-## Writing an area document
-
-`docs/<area>.md` should let the next person skip the work you did: what the subsystem does,
-its data structures as offset tables, the functions that matter, and what is still open.
-Mark anything that reads per-machine state (camera, audio position, the local player slot,
-menus, hardware timers, what was drawn) while changing shared game state — those are the
-places online play breaks. `docs/OVERVIEW.md` explains the distinction.
-
-## Testing on a running game
-
-This is the biggest gap. If you can run two copies of the game against each other in
-PCSX2, you can settle questions that reading cannot. Patches go in `patches/` as PCSX2
-`.pnach` files: one change per patch, a description of what it does and what it costs, and
-whether you tested it. Report results in an issue with what you did, on which frame or
-scene, and what each screen showed.
-
-Use the [two-client validation protocol](docs/VALIDATION.md) to compare a repeatable
-baseline with one patch at a time. A run without a reproduced baseline is inconclusive
-about whether a fix works.
-
-## Working together
-
-- Open an issue before starting a big area so two people do not map the same code.
-- Small pull requests are easier to check than big ones.
-- Disagreements about a name are settled by evidence: point at the address.
+Public CI needs no original disc and validates metadata only. The optional local commit
+gate can require fresh comparison; see [installation and limitations](docs/REBUILD.md#optional-local-commit-gate).
+Follow user authorization for commits and pushes. Authored contributions use the existing
+[MIT license](LICENSE); third-party code needs explicit provenance and license review.

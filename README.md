@@ -1,151 +1,77 @@
 <p align="center"><img src="https://raw.githubusercontent.com/Open-Champions/.github/main/profile/assets/champions-return-to-arms-logo.png" alt="Champions: Return to Arms" width="512"></p>
 
-Part of [Open Champions](https://github.com/Open-Champions), an independent community preservation project.
+# Champions: Return to Arms — PS2 source reconstruction
 
-# Champions: Return to Arms — source reconstruction
+Independently authored C++ that reproduces the original *Champions: Return to Arms*
+PS2 executable, verified one complete function at a time. This repository targets
+the US v2.00 release, `SLUS_209.73`.
 
-An open effort to understand, document and eventually rebuild the code of *Champions:
-Return to Arms* (PS2, US release SLUS-20973, v2.00), the Snowblind-engine action RPG whose
-online service was shut down years ago.
+**Current result: one complete function, eight matching bytes.** The original target
+contains 7,732 indexed functions and 3,038,272 bytes of `.text`. No complete linked
+PS2 executable or playable game is available from this reconstruction.
 
-One goal is practical: make online play dependable again on community servers such as
-[Champions Reborn](https://github.com/HikikoMarmy/Champions-Reborn-Server) by finding and
-fixing the bugs that put players "OUT OF SYNC" and make the game lag. The long-term goal is
-a readable C++ reconstruction of the original PS2 executable, verified one function
-at a time, alongside a native Mac and Windows client built with Godot.
+![Recorded reconstruction progress](docs/rebuild-progress.svg)
 
-**This repository distributes no original game binaries or assets.** Independently
-authored reconstructions are kept separate from private reference files. You need your own copy of the
-disc to analyze game files; basic tool checks and synthetic tests need no game data. See [What may not be committed](CONTRIBUTING.md#what-may-not-be-committed).
+## Project boundaries
 
-## Where it stands
+Open Champions maintains separate repositories for each purpose:
 
-- The executable is 3.0 MB of MIPS code in 7,732 functions. Naming coverage is tracked separately;
-  [docs/STATUS.md](docs/STATUS.md) breaks that down by area.
-- The local Ghidra pass produced 7,731 successful decompilations; one function at
-  `001a3580` still fails with a normalization error. Indexed does not mean fully understood.
-- All 403 C++ class names are recovered and 399 are tied to their virtual tables.
-- The level-script language is fully decoded: all 120 level scripts decompile to readable
-  pseudo-code, and all 191 built-in script commands are located.
-- The online model is mapped: deterministic lockstep, the per-frame sync check, the input
-  codec and the local-player prediction system.
-- Several real sources of desync have been found by reading the code. **None has been
-  confirmed on a running game yet** — that needs two emulators side by side, and it is the
-  most useful thing a new contributor could do. [FINDINGS.md](FINDINGS.md) is the evidence
-  ledger; every claim there is marked observed, inferred or unknown, with addresses.
-  Use the [two-client test procedure](docs/VALIDATION.md) to record reproducible results.
-
-## Rebuilding from source
-
-We are adapting [Open-BFME 1's measured reconstruction approach](https://github.com/Open-BFME/Open-BFME-1):
-claim a function, write C++, compile it, compare every byte, and bank only verified work.
-Champions uses PS2 MIPS code, so its compiler and verifier need different machinery.
-The [rebuild guide](docs/REBUILD.md) explains the supported subset and current limits.
-
-![Recorded C++ reconstruction progress](docs/rebuild-progress.svg)
-
-The bar measures recorded, byte-exact C++ function bodies against the original `.text`
-section. Names, raw decompilations and native archive tools do not increase it. A saved
-receipt is historical evidence; a fresh private-disc comparison is required to verify it
-again. Neither individual function matches nor this bar prove a fully linked PS2 game
-or a playable native client. [Ledger](targets/SLUS-20973/rebuild.json).
-
-For an AI contributor:
-
-> Read AGENTS.md and docs/REBUILD.md. Check current agent ownership, claim one candidate,
-> reconstruct and verify its entire function, commit each verified body with its evidence,
-> and report the measured byte gain before releasing the claim. Preserve blocked attempts
-> without counting them as progress. Keep the native Godot work separate.
-
-## What is here
-
-| Path | What |
+| Repository | Owns |
 |---|---|
-| [docs/OVERVIEW.md](docs/OVERVIEW.md) | How the game is put together — start here |
-| [docs/](docs/) | One document per subsystem, plus file formats and status |
-| [FINDINGS.md](FINDINGS.md) | Evidence ledger for the online bugs |
-| `names.tsv`, `symbols/*.tsv` | Symbol map: address, name, note |
-| `rtti_classes.txt`, `vtables.txt`, `ghidra_funcs.tsv` | Class names, virtual tables, function boundaries |
-| `tools/` | Python tools: cross-references, script decompiler, archive unpacker, sync audits |
-| `ghidra/scripts/` | Ghidra scripts: apply the symbol map, decompile everything |
-| `patches/` | PCSX2 patches for testing hypotheses |
+| **This repository** | Return to Arms PS2 reconstruction sources, exact-byte ledger and verification |
+| [Champions of Norrath](https://github.com/Open-Champions/champions-of-norrath) | The first game's separate PS2 reconstruction |
+| [Open Champions Godot](https://github.com/Open-Champions/open-champions-godot) | Shared native Godot implementation for both games, targeting Mac and Windows without emulation |
+| [Champions research](https://github.com/Open-Champions/champions-return-to-arms-re) | Reverse-engineering findings, subsystem maps, symbols, formats and online investigation |
 
-## MacBook and Windows support
+The repositories share evidence and reviewed behavior contracts. A PS2 function
+match does not establish native gameplay. Mac and Windows support here refers to
+running the reconstruction tools; the native game belongs in the Godot repository.
 
-The research tools run natively in Python; they do not need a PS2 emulator. A
-playable native game client does not exist yet. See the [platform setup guide](docs/COMPATIBILITY.md)
-and [native client roadmap](docs/NATIVE_PORT.md) for the distinction and next milestones.
-The recommended game-client direction is Godot 4 with a portable C++ core; the
-archive reader is implemented, while Godot asset display and gameplay are still ahead.
+## Start here
 
-Run `python3 tools/doctor.py` on macOS or `py -3 tools/doctor.py` in Windows PowerShell
-for a read-only setup check. Basic checks work without any game files. The optional
-`--game SLUS_209.73` checks your executable's identity; `--strict-re` additionally
-requires the configured reverse-engineering dependencies.
+Python 3.10 or newer is enough to check the public metadata and run the 21 synthetic
+tests. No original game files, emulator, compiler or SDK are needed for these checks:
 
-## Getting started
-
-You need Python 3, an `llvm-objdump` build with MIPS target support, and [Ghidra](https://ghidra-sre.org/) with the
-[ghidra-emotionengine-reloaded](https://github.com/chaoticgd/ghidra-emotionengine-reloaded)
-extension. On macOS, the Apple Command Line Tools build tested here cannot disassemble
-this MIPS executable; the Homebrew `llvm@20` build can. Put its `bin` directory on your
-`PATH` or pass `--objdump` to the generator; common Homebrew locations are also detected.
-The following Ghidra commands use macOS/Linux shell syntax.
-
-```bash
-# 1. Copy SLUS_209.73 from your own disc into the repository root. It is git-ignored.
-python3 tools/doctor.py --game SLUS_209.73
-# expect 292f6f48e3609c0026def2307d76c222cd5b389303d53b89b0e107d7b1dcd675
-
-# 2. Disassembly used by the Python tools
-python3 tools/gen_disasm.py SLUS_209.73
-
-# 3. Ghidra project with the symbol map applied, and one decompiled file per function
-mkdir -p build ghidra/proj
-python3 tools/symtab.py merge build/all_names.tsv
-analyzeHeadless ghidra/proj crta -import SLUS_209.73 -processor r5900:LE:32:default
-analyzeHeadless ghidra/proj crta -process SLUS_209.73 -noanalysis -scriptPath ghidra/scripts \
-    -postScript ApplyNames.java "$PWD/build/all_names.tsv" \
-    -postScript DecompAll.java "$PWD/decomp/all" "$PWD/ghidra/scripts/extra_entries.txt" \
-    -postScript ListFuncs.java "$PWD/ghidra_funcs.tsv"
+```sh
+python tools/rebuild.py check
+python -m unittest discover -s tools -p 'test_*.py'
+python tools/rebuild.py progress --json
+python tools/rebuild.py candidates --limit 10
 ```
 
-The Python generator selects a MIPS-capable LLVM installation, preserves zero-valued
-instructions, and writes output without shell encoding conversion. The equivalent
-Windows commands and Ghidra setup are in [COMPATIBILITY.md](docs/COMPATIBILITY.md).
+Public CI runs these checks on Linux x64, Apple Silicon and Intel Macs, Windows x64
+and Windows ARM64, with an additional Python 3.14 job. It validates recorded evidence
+and source fingerprints; it does not recompile against the private retail game.
 
-Then, for example:
+For a fresh byte comparison, supply your own original executable and an existing
+MIPS-capable Clang installation. The recorded leaf matched with LLVM 20.1.8; this
+does not establish general R5900 toolchain compatibility.
 
-```bash
-python3 tools/dis.py SLUS_209.73 0x139e88          # annotated disassembly of a function
-python3 tools/vtab.py SLUS_209.73 show Player      # a class's virtual functions
-python3 tools/gxref.py SLUS_209.73 404464          # who reads and writes a global
-python3 tools/fieldxref.py SLUS_209.73 2fc         # who uses a struct offset
-python3 tools/ghostreach.py 1a5030                 # what the prediction copy can write
-python3 tools/gob.py extract DRUNARE.GOB out/      # unpack a level from your disc
-python3 tools/scr.py dis out/drunare.lmp/script.scr  # decompile its script
+```sh
+python tools/rebuild.py verify --game /private/path/SLUS_209.73 --compiler /path/to/clang++ --report work/rebuild/verification.json
+python tools/rebuild.py progress --report work/rebuild/verification.json --svg work/rebuild/progress.svg
 ```
 
-## How to help
+Quote paths containing spaces. On Windows, use the corresponding `clang++.exe` path.
+The verifier checks the baseline SHA-256, recompiles eligible C++ functions, rejects
+relocations and extent mismatches, and compares every function byte. Objects and logs
+stay in ignored `work/`. The default `check` and `progress` commands validate the
+[sanitized recorded receipt](targets/SLUS-20973/verification.json).
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md). The short version: pick an area from
-[docs/STATUS.md](docs/STATUS.md), say so in an issue, name what you can prove, and write
-down how you know. Testing on a running game, tool improvements and file-format work are
-just as welcome as naming functions.
+Read [the rebuild workflow](docs/REBUILD.md), [contribution rules](CONTRIBUTING.md),
+and [agent coordination](AGENTS.md) before claiming a function. [ORIGIN.md](ORIGIN.md)
+records the preserved history and the controlled function-index snapshot.
 
-## Thanks
+## Contents
 
-- [Champions Reborn Server](https://github.com/HikikoMarmy/Champions-Reborn-Server) for
-  bringing the lobby back.
-- [ghidra-emotionengine-reloaded](https://github.com/chaoticgd/ghidra-emotionengine-reloaded)
-  for making Ghidra read PS2 code properly.
-- [rea](https://github.com/morluto/rea) and [Open-BFME](https://github.com/Open-BFME) for
-  the working method: an evidence ledger, honest names, one measured change at a time.
+- `reconstructed/`: authored reconstruction C++.
+- `targets/SLUS-20973/`: target identity, function ledger and sanitized match receipt.
+- `ghidra_funcs.tsv`: frozen function-boundary metadata imported from research.
+- `tools/rebuild*.py`: verification, checkout-local claims and optional commit gate.
+- `docs/REBUILD.md`: methodology, proof boundaries and outstanding compiler work.
 
-## Legal
-
-*Champions: Return to Arms* belongs to its rights holders. This project is not affiliated
-with them. It documents the behaviour of software its contributors own copies of, for
-interoperability and preservation, and distributes none of it. The tools and notes here are
-under the [MIT license](LICENSE). The displayed game wordmark is excluded from that
-license; see [artwork credits](https://github.com/Open-Champions/.github/blob/main/ARTWORK.md).
+Original executables, disc images, BIOS/SDK files, game assets, raw disassembly and
+raw decompiler output are excluded. Keep your reference files private. See
+[LICENSE](LICENSE) for authored code and documentation. *Champions: Return to Arms*
+and its marks belong to their rights holders; Open Champions is an independent
+community project with no affiliation or endorsement.
