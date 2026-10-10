@@ -213,7 +213,15 @@ publish results. This optional local check can be absent or bypassed, so reviewe
 must still inspect the evidence and source. Passing it verifies eligible function
 bytes, not whole-program linking or gameplay.
 
-## First useful result
+## First recorded result and next work
+
+On October 10, 2026, `reconstructed/function_00108968.cpp` was freshly compiled with
+Clang 20.1.8 into the exact eight bytes of the complete function at `0x00108968`.
+The ledger records the boundary and caller evidence. This is one constant-return
+leaf: 1 of 7,732 indexed functions and 8 of 3,038,272 original `.text` bytes. It
+establishes neither general R5900 compiler support nor a linked or playable game.
+The sanitized [receipt](../targets/SLUS-20973/verification.json) binds the source,
+compiler, options, verifier and comparison hashes; original bytes remain private.
 
 Choose one small eligible function with reliable boundaries and no unresolved
 relocations, establish its inputs and outputs, and determine whether a local candidate
