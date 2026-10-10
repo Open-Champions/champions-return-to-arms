@@ -42,6 +42,11 @@ jobs:
         run: python -m unittest discover -s tools -p 'test_*.py'
       - name: Validate symbol contributions
         run: python tools/symtab.py check
+      - name: Validate reconstruction records (no private disc in CI)
+        run: |
+          python tools/rebuild.py check
+          python tools/rebuild.py progress --svg docs/rebuild-progress.svg
+          git diff --exit-code -- docs/rebuild-progress.svg
       - name: Verify published coverage is current
         run: |
           python tools/coverage.py --write

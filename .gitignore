@@ -1,8 +1,10 @@
 # Whitelist: nothing from the game may be committed. Everything is ignored unless listed here.
 /*
 !/.gitignore
+!/.gitattributes
 !/README.md
 !/CONTRIBUTING.md
+!/AGENTS.md
 !/LICENSE
 !/FINDINGS.md
 !/names.tsv
@@ -40,3 +42,15 @@ __pycache__/
 !/native/include/
 !/native/src/
 !/native/tests/
+
+# Authored reconstruction sources and metadata only; no retail or compiler binaries.
+!/reconstructed/
+/reconstructed/*
+!/reconstructed/*.cpp
+!/reconstructed/*.h
+!/targets/
+/targets/*
+!/targets/SLUS-20973/
+/targets/SLUS-20973/*
+!/targets/SLUS-20973/rebuild.json
+!/targets/SLUS-20973/verification.json

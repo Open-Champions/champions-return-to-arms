@@ -2,18 +2,20 @@
 
 Part of [Open Champions](https://github.com/Open-Champions), an independent community preservation project.
 
-# Champions: Return to Arms — reverse engineering
+# Champions: Return to Arms — source reconstruction
 
 An open effort to understand, document and eventually rebuild the code of *Champions:
 Return to Arms* (PS2, US release SLUS-20973, v2.00), the Snowblind-engine action RPG whose
 online service was shut down years ago.
 
-The first goal is practical: make online play dependable again on community servers such as
+One goal is practical: make online play dependable again on community servers such as
 [Champions Reborn](https://github.com/HikikoMarmy/Champions-Reborn-Server) by finding and
 fixing the bugs that put players "OUT OF SYNC" and make the game lag. The long-term goal is
-a complete, readable account of how the game works.
+a readable C++ reconstruction of the original PS2 executable, verified one function
+at a time, alongside a native Mac and Windows client built with Godot.
 
-**This repository contains no game code and no game assets.** You need your own copy of the
+**This repository distributes no original game binaries or assets.** Independently
+authored reconstructions are kept separate from private reference files. You need your own copy of the
 disc to analyze game files; basic tool checks and synthetic tests need no game data. See [What may not be committed](CONTRIBUTING.md#what-may-not-be-committed).
 
 ## Where it stands
@@ -32,6 +34,28 @@ disc to analyze game files; basic tool checks and synthetic tests need no game d
   most useful thing a new contributor could do. [FINDINGS.md](FINDINGS.md) is the evidence
   ledger; every claim there is marked observed, inferred or unknown, with addresses.
   Use the [two-client test procedure](docs/VALIDATION.md) to record reproducible results.
+
+## Rebuilding from source
+
+We are adapting [Open-BFME 1's measured reconstruction approach](https://github.com/Open-BFME/Open-BFME-1):
+claim a function, write C++, compile it, compare every byte, and bank only verified work.
+Champions uses PS2 MIPS code, so its compiler and verifier need different machinery.
+The [rebuild guide](docs/REBUILD.md) explains the supported subset and current limits.
+
+![Recorded C++ reconstruction progress](docs/rebuild-progress.svg)
+
+The bar measures recorded, byte-exact C++ function bodies against the original `.text`
+section. Names, raw decompilations and native archive tools do not increase it. A saved
+receipt is historical evidence; a fresh private-disc comparison is required to verify it
+again. Neither individual function matches nor this bar prove a fully linked PS2 game
+or a playable native client. [Ledger](targets/SLUS-20973/rebuild.json).
+
+For an AI contributor:
+
+> Read AGENTS.md and docs/REBUILD.md. Check current agent ownership, claim one candidate,
+> reconstruct and verify its entire function, commit each verified body with its evidence,
+> and report the measured byte gain before releasing the claim. Preserve blocked attempts
+> without counting them as progress. Keep the native Godot work separate.
 
 ## What is here
 

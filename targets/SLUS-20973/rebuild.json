@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "target": {
+    "id": "SLUS-20973-v2.00",
+    "baseline_sha256": "292f6f48e3609c0026def2307d76c222cd5b389303d53b89b0e107d7b1dcd675",
+    "elf_machine": 8,
+    "text": {
+      "address": "0x00100000",
+      "size": 3038272
+    }
+  },
+  "function_index": "ghidra_funcs.tsv",
+  "functions": []
+}

@@ -1,0 +1,12 @@
+# Verification fingerprints must be identical on macOS, Windows and Linux.
+*.py text eol=lf
+*.cpp text eol=lf
+*.h text eol=lf
+*.tsv text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.svg text eol=lf
+*.yml text eol=lf
+*.sh text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf

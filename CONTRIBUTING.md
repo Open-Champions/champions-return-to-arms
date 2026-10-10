@@ -17,6 +17,12 @@ pseudo-code you wrote yourself, and short identifiers the game exposes (class na
 command names, file names). The `.gitignore` is a whitelist to make mistakes hard; do not
 weaken it.
 
+Independently authored C++ reconstructions are also welcome under `reconstructed/`,
+with the evidence and byte verification described in [REBUILD.md](docs/REBUILD.md).
+This does not permit copying raw decompiler output, embedded instruction bytes, game
+assets, or proprietary compiler files. The original executable stays local. Consult
+[AGENTS.md](AGENTS.md) for ownership claims and the function-by-function workflow.
+
 ## The one rule about claims
 
 Say how you know. Every statement in `FINDINGS.md` and the area documents is one of:
