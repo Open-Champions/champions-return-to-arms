@@ -79,6 +79,29 @@
         "-fomit-frame-pointer"
       ],
       "evidence": "Observed complete body 0x00207438-0x0020743f: returns after writing the low byte of the second argument to offset 0x16c from the first argument, with no other memory operations or calls. Next body starts at 0x00207440; preceding bytes are alignment padding. Direct caller 0x0027e8b0 passes storage in the first argument and constant 5 in the second. Field semantics and original surrounding type remain unknown; the source expresses only the observed byte-store contract."
+    },
+    {
+      "id": "function_00207308",
+      "address": "0x00207308",
+      "size": 8,
+      "source": "reconstructed/function_00207308.cpp",
+      "symbol": "champions_rebuild_00207308",
+      "language": "c++",
+      "compiler_args": [
+        "--no-default-config",
+        "--target=mipsel-none-elf",
+        "-march=mips3",
+        "-mabi=32",
+        "-O2",
+        "-ffreestanding",
+        "-fno-pic",
+        "-mno-abicalls",
+        "-fno-stack-protector",
+        "-fno-exceptions",
+        "-fno-rtti",
+        "-fomit-frame-pointer"
+      ],
+      "evidence": "Observed complete body 0x00207308-0x0020730f: writes the low 16 bits of the second argument to byte offset 0x68 of the first argument and returns, with no calls or other memory accesses. Previous body ends at 0x00207307; next body starts at 0x00207310. Direct callers include 0x0020729c (passes a signed halfword loaded from offset 0x162 of the same storage) and 0x00203394 (passes -8192). Original type and field semantics remain unknown; authored ABI contract requires aligned writable 16-bit storage at offset 0x68."
     }
   ]
 }
