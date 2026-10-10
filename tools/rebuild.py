@@ -122,13 +122,58 @@ class Elf32:
         return contents[start:start + size]
 
 
+def source_code(text):
+    """Expose code tokens without mistaking literal contents for comments.
+
+    This is a conservative lexical gate, not a C++ parser. Comments become
+    whitespace (including their original newlines); literals become one inert
+    token so a following # cannot incorrectly become a directive at line start.
+    Raw strings are explicitly outside this initial supported source subset.
+    """
+    require('??' not in text, 'trigraph syntax is outside the initial self-contained scope')
+    text = text.replace('\r\n', '\n').replace('\r', '\n')
+    # Clang also accepts whitespace between a splice's backslash and newline.
+    text = re.sub(r'\\[ \t\v\f]*\n', '', text)
+    numeric_token = re.compile(r"[0-9](?:[a-zA-Z0-9_.]|'(?=[a-zA-Z0-9_]))*")
+    output, i = [], 0
+    while i < len(text):
+        start = i
+        if text.startswith('//', i):
+            end = text.find('\n', i + 2)
+            i = len(text) if end < 0 else end
+            output.append(' ' * (i - start))
+        elif text.startswith('/*', i):
+            end = text.find('*/', i + 2)
+            require(end >= 0, 'unterminated C++ block comment')
+            i = end + 2
+            output.append(''.join('\n' if c == '\n' else ' ' for c in text[start:i]))
+        elif text.startswith(('R"', 'u8R"', 'uR"', 'UR"', 'LR"'), i):
+            raise ValueError('raw strings are outside the initial self-contained scope')
+        elif text[i] in ('"', "'"):
+            quote = text[i]
+            i += 1
+            while i < len(text) and text[i] != quote:
+                require(text[i] != '\n', 'unterminated C++ literal')
+                if text[i] == '\\':
+                    i += 1
+                i += 1
+            require(i < len(text), 'unterminated C++ literal')
+            i += 1
+            output.append('L' + ' ' * (i - start - 1))
+        elif '0' <= text[i] <= '9':
+            # Keep numeric digit separators from being read as character quotes.
+            token = numeric_token.match(text, i)[0]
+            output.append(token)
+            i += len(token)
+        else:
+            output.append(text[i])
+            i += 1
+    return ''.join(output)
+
+
 def source_bytes(path):
     data = path.read_bytes()
-    text = data.decode('utf-8-sig')
-    # C++ translation removes line splices before interpreting directives.
-    require('??' not in text, 'trigraph syntax is outside the initial self-contained scope')
-    normalized = re.sub(r'\\\r?\n', '', text)
-    clean = re.sub(r'/\*.*?\*/|//[^\n]*', '', normalized, flags=re.DOTALL)
+    clean = source_code(data.decode('utf-8-sig'))
     require(not re.search(r'^\s*(?:#|%:)', clean, re.MULTILINE),
             'initial matching sources must be self-contained (no preprocessor directives)')
     require(not re.search(r'\b(?:asm|__asm|__asm__)\b', clean),

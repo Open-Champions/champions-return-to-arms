@@ -194,6 +194,65 @@ class RebuildTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'escapes'):
             self.load()
 
+    def test_literal_comment_markers_cannot_hide_external_inputs_or_assembly(self):
+        for forbidden in ('#include "value.hpp"', '%:include "value.hpp"',
+                          'asm("nop");', '__asm__("nop");'):
+            for marker in ('/*', '//'):
+                source = ('static const char* marker = "' + marker + '";\n'
+                          + forbidden + '\n// */\n')
+                self.source.write_text(source, encoding='utf-8')
+                with self.subTest(forbidden=forbidden, marker=marker), self.assertRaises(ValueError):
+                    rebuild.source_bytes(self.source)
+
+    def test_literals_and_comments_preserve_lexical_boundaries(self):
+        benign = [
+            'const char* s = "/* #include \\\"value.hpp\\\" asm */ //";\n',
+            'const char* s = "escaped \\\" quote /*"; char c = \'\\\'\';\n',
+            '// /* comment markers do not start a block here\nextern "C" int f() { return 1; }\n',
+            '/* #include "value.hpp"\nasm("nop"); */\n',
+            'auto value = 1\'000; auto hex = 0xF\'F;\n',
+        ]
+        for source in benign:
+            self.source.write_text(source, encoding='utf-8')
+            with self.subTest(source=source):
+                self.assertEqual(rebuild.source_bytes(self.source), source.encode())
+        # Comments separate tokens rather than joining them, but retain newlines.
+        self.assertEqual(rebuild.source_code('a/**/sm'), 'a    sm')
+        for source in ('// /*\n#include "value.hpp"\n// */\n',
+                       '/* lead\ncomment */ #include "value.hpp"\n',
+                       'asm/**/("nop");'):
+            self.source.write_text(source, encoding='utf-8')
+            with self.subTest(source=source), self.assertRaises(ValueError):
+                rebuild.source_bytes(self.source)
+
+    def test_line_endings_and_clang_extended_splices_are_normalized(self):
+        for newline in ('\n', '\r\n', '\r'):
+            for gap in ('', ' ', '\t'):
+                for body in ('#inc\\' + gap + newline + 'lude "value.hpp"',
+                             'a\\' + gap + newline + 'sm("nop");'):
+                    self.source.write_bytes(body.encode())
+                    with self.subTest(newline=newline, gap=gap, body=body), self.assertRaises(ValueError):
+                        rebuild.source_bytes(self.source)
+            # A real CR line ending terminates a line comment before directives.
+            self.source.write_bytes(('// comment' + newline + '#include "value.hpp"').encode())
+            with self.subTest(newline=newline), self.assertRaises(ValueError):
+                rebuild.source_bytes(self.source)
+        # Unicode whitespace is not a Clang splice: do not let its preceding
+        # line comment consume the real directive on the next line.
+        self.source.write_text('// comment\\\u00a0\n#include "value.hpp"\n', encoding='utf-8')
+        with self.assertRaises(ValueError):
+            rebuild.source_bytes(self.source)
+
+    def test_raw_and_unterminated_literals_are_explicitly_rejected(self):
+        for prefix in ('', 'u8', 'u', 'U', 'L'):
+            self.source.write_text('auto s = ' + prefix + 'R"tag(/*)tag";', encoding='utf-8')
+            with self.subTest(prefix=prefix), self.assertRaisesRegex(ValueError, 'raw strings'):
+                rebuild.source_bytes(self.source)
+        for source in ('"unterminated', "'unterminated", '/* unterminated', '"line\nbreak"'):
+            self.source.write_text(source, encoding='utf-8')
+            with self.subTest(source=source), self.assertRaisesRegex(ValueError, 'unterminated'):
+                rebuild.source_bytes(self.source)
+
     def test_match_report_and_progress_never_credit_without_evidence(self):
         ledger, index, index_hash, report = self.verify()
         self.assertEqual(report['functions'][0]['status'], 'matched')

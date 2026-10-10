@@ -5,8 +5,8 @@
   "baseline_sha256": "292f6f48e3609c0026def2307d76c222cd5b389303d53b89b0e107d7b1dcd675",
   "ledger_sha256": "59568993a91b57cc0cd1a439c0e8a8e36c8b86a2045d84873bd39b4631e0a16d",
   "function_index_sha256": "4c597317e64e41bc48752b4b69dbadf6d7eb592004c94bed22842bc0e63d0ac3",
-  "verifier_sha256": "5927f1f25785fdd5c53c6d784d870484e41c5fbf2fc21ddf412a69edc826d644",
-  "recorded_at": "2026-10-10T08:08:40.316278+00:00",
+  "verifier_sha256": "1a5c8128f1bfc3d15c0ff749efd8f0d2dcfdcdb126ed37c5260b537dcb0a8c12",
+  "recorded_at": "2026-10-10T10:40:25.033155+00:00",
   "compiler": {
     "name": "clang-20",
     "sha256": "01ac721d7f35bb9a1c74b4a17c6253fd645e1602a7322a47003eec1de00a8bd0",

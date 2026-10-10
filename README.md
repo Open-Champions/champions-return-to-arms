@@ -29,8 +29,8 @@ running the reconstruction tools; the native game belongs in the Godot repositor
 
 ## Start here
 
-Python 3.10 or newer is enough to check the public metadata and run the 21 synthetic
-tests. No original game files, emulator, compiler or SDK are needed for these checks:
+Python 3.10 or newer is enough to check the public metadata and run the synthetic
+test suite. No original game files, emulator, compiler or SDK are needed for these checks:
 
 ```sh
 python tools/rebuild.py check

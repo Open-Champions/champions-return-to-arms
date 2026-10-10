@@ -152,6 +152,11 @@ any relocations targeting the candidate code section, including ones outside the
 function itself. Initial source is self-contained C++: preprocessor directives and
 inline assembly are outside this verifier's accepted scope so that
 unrecorded header inputs or instruction dumps cannot masquerade as source recovery.
+The source gate distinguishes string/character literals from comments before checking
+for directives or inline assembly. Unsupported lexical forms are rejected rather
+than guessed. Changing the verifier invalidates recorded receipts; freshly compile
+all recorded functions before publishing refreshed evidence.
+
 This deliberately limits the first usable cases; noncontiguous functions, unresolved
 relocations, jump-table/data dependencies and whole-program linking need additional
 work. Do not flatten or discard those
