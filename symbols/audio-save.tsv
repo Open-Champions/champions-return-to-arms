@@ -1,0 +1,197 @@
+# area: audio-save  (0x210000-0x232000)  point lists, sound, save/load and memory card, credits, player selection, dialog, mission menu
+# ---- point lists (path objects parsed from level text; before the sound code) ----
+00210034	pointList_snapToNearest	(follower) Inferred: finds the list point nearest the follower's position and marks it
+0021039c	pointList_getPoint	(list, i) address of point i modulo the count; points are 0x40 bytes
+002103c8	pointList_get	(index) entry of the table at 0x871548
+002103e0	pointList_followerPoint	(follower, offset, out)
+00210428	pointList_parse	reads keys name, barrier, continous, norotate, pcount, p
+0021080c	pointList_free
+# ---- sound (sound.cc; unit ends at 0x216bf8) ----
+00210cd0	sound_flushSpuCommands	turns the key-on/key-off masks into commands and sends the batch (up to 512 x 8 bytes at 0x875c00) to the IOP
+00210e60	stream_findLevelEntry	(name) entry of the current level's dialog.bin table (0x50 bytes each); prefers the entry for language 0x44fddc
+00210f38	stream_findGlobalEntry	(name) same lookup in the global table loaded at 0x8723e8
+00211018	stream_queueLevelIndex	(stream, index, flags)
+002110e0	music_playGlobal	(name, flags) queues a global entry from mouth.vat on stream 2 with flags | 0x22
+00211338	stream_queueStop	(stream) appends a stop marker (flag 2) to the stream's queue
+002113c8	stream_queue	(stream, file, flags, offset, length, ...) appends to the 8-entry queue of a stream
+00211a08	stream_startHeld	Inferred: clears the first hold flag (8) and issues IOP call 0x40
+00211b20	audio_streamStatus	(stream) IOP call 0x50, then non-zero while the stream is playing or has queued data; bit 0 always set when busy
+00211c18	stream_heldEntryReady	Inferred: 1 when the held entry has buffered enough to start
+00211ce8	audio_streamStop	(stream) clears the queue and state, IOP call 0x60
+00211df8	stream_serviceQueues	Inferred: every 4th sound frame; moves queue entries into playback
+00212340	sound_pauseResumeVoices	when the game freezes, zeroes the pitch of voices without the play-while-frozen flag; restores it afterwards
+00212500	music_updateDucking	lowers the music volume while the voice stream (1) plays
+00212670	sound_update	once per displayed frame: delayed samples, pause, streams, sequences, SPU flush, voice end detection
+00212b28	sound_allocStreamBuffers
+00212f08	sound_init
+002130d0	sample_register	(name, sample, flag) assigns SPU memory and uploads; called by the lump loader
+002132f8	soundSeq_duration	(sequence) longest event time plus sample length, in seconds
+00213438	sound_release	(handle) lets a sequence or looping voice finish
+002134e8	sound_playSample	(pitchScale, volume, delaySeconds, sample, pos or 0) -> voice index or -1; pans from the local camera
+00213a78	voice_setVolume	(left, right, voice) scaled by the SFX volume option; mono option averages
+00213c50	sound_panAtten	(near, far, pos, outL, outR) distance and pan relative to the camera position 0x44f038 and right vector
+00213ea0	sound_stop	(handle) bit 15 set = sequence slot | generation << 8, else voice index
+00213ff0	sample_uploadToSpu
+00214230	sound_playOnObject	(volume, sequence, object or 0) -> handle or -1; links a handle to the object and follows it
+00214428	sound_playAtPos	(volume, sequence, pos) -> handle or -1
+00214650	sound_setVolume	(volume, sequence handle) re-pans the sequence's voices
+002147c0	soundSeq_updateAll	steps the 32 sequence slots; skipped while frozen unless flagged
+00215418	sound_unloadAbove	(level) stops everything and drops sample banks registered above a load level
+00215b08	sound_staticInitDestroy
+00215c20	stream_playGlobal	(stream, name, flags)
+00215da8	stream_levelEntryLengthByIndex
+00215e48	stream_levelEntryLength	(name)
+00215e78	music_applyVolume
+00215ec8	music_playLevelIndex	(index, flags)
+00215f48	music_playLevel	(name, flags) script startMusic
+00215fc8	stream_playLevel	(stream, name, flags) script startAudio, cutscene keys, dialog lines
+00216130	stream_clearQueue
+002162a0	stream_clearHold	(stream) clears the first hold flag in the queue
+00216310	stream_queuedFlags
+00216388	stream_activeFlags
+00216458	stream_queueCount
+00216570	music_setDuck
+00216588	sound_muteFor	(seconds) sound_playSample returns -1 while the counter 0x877240 runs
+00216610	sampleBank_raiseLevel
+00216690	audio_setChannelVolume	(volume 0-1, channel) channel 2 is music
+002166e0	audio_sendVolumes	IOP call 0x80 with the three channel volumes and the stereo option
+00216798	sample_findByName
+00216820	stream_levelFileName	"<level>.vat"
+00216860	stream_levelDirectory	dialog.bin table inside "<level>.lmp"
+002168e8	voice_setPosition	(scale, voice, pos)
+002169f8	voice_alloc	round robin over 43 voices, skipping busy ones
+00216a90	sound_error
+00216ad0	sound_setPlaysWhileFrozen	(sequence handle)
+00216bb8	sound_staticInit
+00216bd8	sound_staticDestroy
+# ---- save and load (unit ends at 0x222f74) ----
+00216bf8	save_itemPtrToIndex	(item address, record) -> bag * 1000 + index, or -1
+00216c80	save_snapshotPlayer	(slot) copies g_players[slot] to the saved copy at 0x879ec0 and turns item pointers into indices
+00216e10	save_itemIndexToPtr
+00216ea8	save_fixupPlayer	(slot) inverse of the pointer conversion on the live record; clears the object pointer
+00216fcc	save_init	memory-card setup; registers the save daemon tasks; sets the debug flag 0x4f8ee0 when the card has a file debug.sht
+002174b8	save_reset	clears play time and the save buffer
+00217518	memcard_isBusy	a card screen is open or an operation is pending
+00217550	memcard_getState
+0021755c	memcard_requestConfigLoad	state 0
+00217584	memcard_requestConfigLoad1	state 1
+002175b4	memcard_requestSave	(slot) state 3; needs a living player; in a net game only for a local slot
+002176e0	memcard_requestLoad	(slot, flag) state 4
+0021777c	save_storeLevelState	(levelName) adds the level to the 10-entry directory and writes its object state into the save buffer
+00217978	level_loadScriptAndObjects	Inferred from strings script.scr, preStart, objects.ob, start
+00217bdc	memcard_requestConfigSave	state 5
+00217c38	memcard_requestEndGameSave	state 6
+00217d30	save_findAct	(levelName) index of the act whose level list contains the name (current act first), or -1
+00217edc	save_getAct
+00217f14	save_armAutosave	Inferred: sets the checkpoint countdown 0x88d40c after a level load
+002180a8	save_setAct
+002180b4	memcard_requestImport	(slot, flag) state 9: import a character for a net game
+002182d4	save_levelStateStored	1 when the current level has an entry in the level directory
+0021837c	save_playerCopy	(slot) address of the saved copy
+00218398	save_restorePlayer	(slot) saved copy -> live record, then fix up
+00218434	save_createLaunchPlayer	Inferred: builds a player from a net-launch table row (0x2c bytes) and snapshots it
+002184a4	save_playerBlock	(i) address of player record i inside the save buffer
+00218520	save_setPlayerCount
+0021857c	mem_copyBytes
+002185ac	memcard_abort	called from net_closeLocalMenus
+00218600	save_writeLevelState	three length-prefixed sections written by 0x14e5c8, 0x19ee10 and 0x16865c
+002187a0	save_levelIndexInAct
+002188a8	save_daemonRun	run task "Async Load/Save Daemon RUN" (priority 20): play-time counter and the delayed checkpoint save
+002189e0	save_daemonDraw	draw task (priority 20): pumps the card and runs the screen for the current state
+00218afc	memcard_saveScreen	state 3: builds the buffer, writes it as one 0x4bc78-byte file
+00219360	memcard_loadScreen	state 4: reads the file into the buffer and calls save_load
+00219a88	memcard_configScreen0
+00219b14	memcard_configScreen1
+00219b90	memcard_browser	card check / format / file list shared by all card screens
+0021c3a4	memcard_slotList	save-slot picker with overwrite and delete
+0021e5c8	memcard_closeFile
+0021e614	memcard_cancel
+0021e850	memcard_pushPause	offline only: pushes g_paused on a small stack and pauses
+0021e8b4	memcard_popPause	offline only
+0021effc	memcard_makeSlotName	first unused "<prefix>_slot<n>"
+0021f238	memcard_setState	(state, keepPrevious)
+0021f260	memcard_backupEntry
+0021f2f8	memcard_restoreEntry
+0021f390	memcard_saveConfigScreen	state 5
+0021f6dc	memcard_endGameScreen	state 6
+0021fa2c	memcard_importScreen	state 9
+00221840	memcard_clearEntry
+0022226c	memcard_portLabel	"<port>-<slot letter>"
+0022233c	save_levelDisplayName
+002223d4	save_packLocalPlayer	net game save: moves the local player's block to position 0 and sets the count to 1
+00222580	save_unpackLocalPlayer	undoes save_packLocalPlayer after the write
+0022266c	save_reload	deathTask wrapper around save_load
+0022274c	profile_setVar	script setpv; also requests a config save
+0022289c	profile_getVar	script getpv
+00222a8c	import_alloc
+00222ad4	import_free
+00222b40	memcard_optionsScreen	state 10
+00222e10	memcard_tickSpinner
+00222e6c	save_staticInitDestroy
+00222f54	save_staticInit
+# ---- memory card queue, balance table, credits ----
+00222f74	mc_init
+00222fe4	mc_resetPortInfo
+0022303c	mc_resetQueue
+00223064	mc_pump	finishes the pending card call and starts the next queued one
+002233e4	mc_isBusy
+0022342c	mc_wait	blocks until the queue is empty or a result arrives
+00223470	mc_queueOp	(op, a, b, c) 256-entry ring: 0 open, 1 close, 3 read, 5 write, 6 file info, 8 init
+00223998	balance_load	loads monsters.bal from balance.lmp
+00223c64	credits_load
+00223d3c	credits_run
+# ---- player selection ----
+002243f8	playerSel_initCache	allocates selection data; run task "playerSelectionCache" (priority 24)
+00224558	playerSel_free
+002245b8	playerSel_start	draw task "playerSelection" (priority 9)
+002248e8	playerSel_isRunning	script playerSelRunning
+00225428	playerSel_cacheTask
+00225478	playerSel_task	whole character creation / selection screen
+0022a360	playerSel_finish	sets needPlayers and queues the hub level
+0022be68	nameEntry_run
+0022c920	nameEntry_draw
+0022d2b4	playerSel_raceLumpName
+0022e714	levelSettings_parse	Inferred: object factory reads camMaxHeight, dimLevel, dustColor, noFight, camPitch ...
+# ---- dialog ----
+0022ec9c	dialog_queueLineAudio
+0022ee2c	dialog_onMsg	handler of the dialog channel: 0 start (NPC name, player, flags, sender camera), 1 confirm, 2 move choice, 3 end, 4 leave request
+0022f8bc	dialog_addTasks	run task "Dialog Demon Run" and draw task "Dialog Demon Draw", priority 110
+0022f910	dialog_loadBox
+0022f974	dialog_registerMsgHandler	channel id at 0x8e2e94
+0022f99c	dialog_free
+0022fa50	dialog_start	script startDialog: only the machine that owns the active player sends msg 0, with its own camera position and angles
+0022fbc0	dialog_isOpen
+0022fc04	menuMutex_tryAcquire	0 on success; offline guard so only one of inventory / NPC talk opens
+0022fc2c	menuMutex_isHeld
+0022fc38	menuMutex_release
+0022fc70	dialog_startTalkAnim
+0022fdd8	dialog_syncMouth	mouth animation from audio_streamPosition
+0022ff48	dialog_runTask	run task: reads the raw local pad and the local voice stream, sends dialog msgs 1-4
+00230628	dialog_drawTask
+00230c74	dialog_showNode	(index) lays out a node's text and choices and queues its audio
+# ---- mission menu ----
+00231520	missionMenu_open	registers missionmenurun (run, priority 20) and missionmenudraw (draw, priority 20)
+002316b8	missionMenu_removeTasks
+002316fc	missionMenu_run	run task driven by the lockstep pad of the owning player; g_paused set only offline
+# ---- globals owned by this area ----
+004f8944	g_musicVolume	float 0-1 option
+004f8940	g_sfxVolume	float 0-1 option
+004f8954	g_soundFrame	counts sound_update calls
+004f8a00	g_curSoundSeq	sequence slot being stepped, -1 otherwise; stamped into voices started meanwhile
+004f8ee0	g_debugCheats	u8; set at boot when the memory card holds debug.sht
+00871a68	g_soundSeqs	32 x 0x4c sequence slots
+00872880	g_voices	43 x 0x14 voice records
+008723f8	g_delayedSamples	32 x 0x24
+00875c00	g_spuCmdBatch	512 x 8
+00876c10	g_streams	3 x 0x1c4: 0 ambience, 1 voice, 2 music (Inferred roles)
+00879e38	g_saveHeaderCopy	0x70-byte copy of the save header made by save_load
+00879ec0	g_savedPlayers	PlayerData[4] snapshot with item indices instead of pointers
+0088d3a0	g_memcardState	-1 idle, 0/1 config, 3 save, 4 load, 5 config save, 6 end-game save, 9 import, 10 options
+0088d3d4	g_currentAct
+0088d40c	g_autosaveCountdown
+0088d414	g_playTimeSeconds
+00895580	g_saveBuffer	0x4bc78 bytes; the memory-card file is this buffer verbatim
+008ab590	g_saveLevelDir	10 x {char name[0x14]; u32 size} inside the save buffer (+0x16010)
+008ab698	g_saveLevelData	per-level object state inside the save buffer (+0x16118)
+008e2d60	g_dialogData	non-zero while a dialog is open
+004fe53c	g_menuMutex

@@ -1,0 +1,53 @@
+00100000	picCache_findHeaderEntry	(name): strips the extension and a trailing number, matches the stem against the piccache.hdr groups and the number against the 10-byte entries; returns the entry or 0
+001001a8	picCache_loadHeader	blocking read of piccache.hdr into a tagged allocation (0x3e9c0c); turns the two offsets in each 12-byte group into pointers; called from game_loadLevel 0x1e56c4
+00100298	picCache_freeHeader	frees the header allocation and clears 0x3e9c0c; called from the session exit branch 0x323570
+001002d4	picCache_evictOldEntry	frees the least recently used slot that is not being loaded and was last used more than 8 display frames ago (counter 0x44fdd0); clears its block markers; returns 1 if one was freed
+001003cc	picCache_serviceRequests	once per displayed frame (0x323378): on read completion copies the 64-byte header into the slot and cuts the data into 0x500-byte chained blocks, then starts the next pending piccache.dat read
+00100790	picCache_queuePicture	(name): takes a free slot of 64 (evicting if none), stores the name, block list = -1 (pending), sets the busy flag 0x3e9c00
+0010086c	picCache_getPictureDimensions	(name, int *w, int *h): header entry halfwords +6/+8, or zeros when the name is not in the header
+001008bc	picCache_getOrRequestPicture	(name): slot +0x80 when its blocks are loaded (refreshes last-use), else 0; a name with no slot is queued
+00100974	loot_spawnGold	(Vec3 *pos, amount): up to 10 scatter tries from g_randSeed with a ground-height test, then news a 0xc0-byte object of class Gold (ctor 0x157668, vtable 0x511a88); earlier draft name loot_spawnScatteredPickup
+00100ba0	loot_spawnNamedItem	(Vec3 *pos, descriptor): item_parseDescriptor, free-spot search 0x14acf8, then news the 0x248-byte item prop (ctor 0x155a0c); used by the script dropItem built-ins and Creature_onDeath
+00100d54	loot_generateDrops	(f zOff, f throwSpeed, f goldScale, f goldChance, f qualityRow, f itemChance, Vec3 *pos, angle, reagentFilter, forceSpecial): the death-drop roll, all from g_randSeed: gold, potion or arrows, reagent, figurine, equipment; 61 of 71 call sites are Creature_dropLoot
+00101998	itemName_stripGrammarSuffix	(wide string): removes a trailing underscore gender/number tag and returns 1-4 for it; rules depend on the language byte 0x44fddc (4 uses one letter, 1 and 3 use two)
+00101c0c	itemName_prependUndHook	(wide string): would prefix a conjunction to strings starting with d,e,?,space; inert because its state word 0x3e9ca8 starts at 0 and nothing else writes it
+00101cb4	itemName_copyDelimitedVariant	(src, n, dst): copies the n-th bar-separated alternative of a wide string
+00101d0c	itemName_getAffixForm	(form or -1, text key): looks the key up in the text table (0x173c84) and returns the grammatical form selected by form; result is a pointer into its own stack frame
+00101e48	itemName_buildLocalizedName	(item, decorated): display name in the static wide buffer 0x564420 from the definition name key plus prefix and suffix words; word order and agreement depend on language 0x44fddc
+001024a8	item_getValue	(item): gold value. Fixed price (definition +0x14) times count when set, else a formula over damage or armour, raised to a power, plus a term per modifier, times 40 and count; used by the shop and as the budget test in the generators
+00103e08	item_getWeight	(item): definition +8 times count, compressed above 5 (armour) or 15, scaled by modifier 0x24 which the parser reads from the weightmodifier token; earlier draft name item_getScaledField08; caller player_itemWeight
+00103ec8	item_getArmorValue	(item): definition +0x18 (non-zero on exactly the 236 category-1 definitions) plus modifier 0x0d percent (armorbonus token); earlier draft name item_getModifiedField18
+00103f88	item_getModifiedField1a	(item): definition +0x1a (non-zero only on weapons, near the mean damage) plus modifier 0x23 percent; Player_recalcDamage adds it to player record +0xcc; meaning of the field not established
+0010404c	item_getBaseRangePlusField1a	adds item_getModifiedField1a to definition +0x0e/+0x10; no caller and no pointer to it
+00104100	item_getDamageRange	(item, int *min, int *max, withElemental): definition +0x0e/+0x10 scaled by modifier 0x23 percent, optionally plus the two values of modifiers 0x15-0x18 and 0x26; earlier draft name item_getModifiedRange
+001046b4	item_getUnitMultiplier	returns float 1.0; multiplied into the damage range
+001046c4	item_getFlag33Level	(item): 7 when item flag bit 33 is set, else 0; only caller is item_selectDrawEffect
+001046e0	item_randomizeVariant	(item): bits 11-15 of the item flags = g_randSeed draw modulo the definition's variant count (same bits of definition +0x28); no draw when the count is 0
+00104758	item_generateFromSpecialTable	(out, budget, category or -1, level): 10 random picks from the preset table 0x3ea550 (one seed draw each), keeps the highest value not above budget, adds a required-level modifier from the value; returns 0 if nothing fits
+00104c04	item_classifyCategory0	(definition): weapon drop group: 0 for subtype 6 (thrown), 1 for subtype 3 with damage-type bit 8, else 2; -1 for non-weapons
+00104c48	item_classifyCategory1	(definition): armour drop group from slot byte +0x1c: 11->0, 4->1, 9->2, 12->3, 3->4, other->5; -1 for non-armour
+00104ca4	item_generateWithAffixes	(out, budget, category, wantSuffix or -1, level): random base definition with every eligible prefix and a random suffix tried, keeps the highest value not above budget; filters cloth armour by how many players have class id 4; all from g_randSeed
+00105be8	item_generateWithAffixesUnbudgeted	(out, level): older generator, one random base, prefix and suffix with no value test; no caller and no pointer to it
+00106214	item_generateFlag35Entry	(out, level, pictureName or 0): random category-2 definition with flag bit 35 (the reagent drops) between a difficulty floor and level, optionally with a given picture name
+00106658	item_generateFlag45Entry	(out, level): random category-2 definition with flag bit 45 (the figurine drops) between a difficulty floor and level
+001068d8	item_selectDrawEffect	(f scale, item): draw-time only. Item flag bit 33 set: fills the effect block 0x3e9cd0 and selects it (0x1797d8 mode 2); clear: mode 0. Callers 0x156db4 and 0x15991c (objects area), Player_drawEquipped, WeaponRack_draw
+001069b8	item_parseDescriptor	(text, out, variant or -1, useSpecialTable): builds a 0x48-byte item from name+modifier+modifier text; 42 modifier tokens map to type codes 0-0x28 and 0x2a, a mesh token sets the variant; variant -1 calls item_randomizeVariant (g_randSeed); unknown names fall back to table row 0; 378 call sites
+00107ca8	item_copyMutableFields	(dst, src): count, flags, prefix/suffix bytes and the four modifiers; zeroes +0x10..+0x1f and +0x22; leaves the definition pointer alone
+00107d54	item_appendGeneratedUnique	(list, budget, _, category): up to two tries of item_generateWithAffixes (level 1) for an item not already in the 0x48-stride list (count at +0x1200); 'unique' here means not a duplicate; only caller shop_restockByGold
+00107ea4	item_encodeDefinitionIndex	(item): definition pointer -> (pointer - 0x3f7650) / 64 in place; preset-table rows come out negative; used by save_snapshotPlayer
+00107ec0	item_decodeDefinitionIndex	(item): inverse of item_encodeDefinitionIndex
+00107edc	item_buildPictureFilename	(out, bodyType, item): picture/texture file name from the definition's picture name or model-table row, the variant, the prefix's colour index and, for worn armour, a body-type code from 0x4026d8
+00108358	item_getPicture	(bodyType, item): picCache_getOrRequestPicture of that name; while it is not loaded returns a fixed placeholder picture from equipmnt.lmp
+001083a4	item_getPictureDimensions	(bodyType, item, int *w, int *h)
+001083f8	item_getResourceIndex	(item): row of the model table 0x3e9ce0 = definition +0x34, plus the variant when item flag bit 36 is set
+00108434	item_loadResources	resolves every model-table row's two file names to pointers in equipmnt.lmp, and a shot animation for bow definitions (+0x38); also parses every base definition with variant -1, which advances g_randSeed once per definition that has variants (223); called from game_loadLevel 0x1e56bc when hud.lmp is not loaded
+00108590	item_generateConsumable	(out): g_randSeed picks a mana, healing or recall potion; size from the level rating 0x4f714c and min(difficulty, 3)
+00108844	item_parseAllSpecialTableEntries	parses every preset-table row and discards the result; no caller and no pointer to it
+00108924	item_sameIdentityFields	(a, b): b has a definition and a, b agree on definition, 64-bit flags and the word at +0x20 (prefix, suffix)
+00108968	item_getSpecialTableRowCount	returns 0x344 = rows of the preset table including its terminator, i.e. the distance in rows from 0x3ea550 to the base table; player_importCharacter uses it to rebase negative item indices; earlier draft name item_getConstant344
+00108970	world_countLivingNonplayerCreaturesInBox	(f halfSize, Vec3 *centre): world_collectObjectsInBox, counts objects with flags & 0x68 == 0x20
+00108a60	Creature_computeAvoidanceOffset	(f dist, Vec3 *out, creature, target): three forward rays (centre and both edges), keeps a side choice in creature +0x2f8 (0 none, 1, 2), returns a sideways offset of two radii
+00108fd8	Creature_probeThreeMovementRays	(creature, Vec3 *delta, hitOut): first blocked fraction among centre, left-edge and right-edge rays (0x18ad94); 1.0 when clear
+00109280	Creature_computeAvoidanceTarget	(Vec3 *out, creature, Vec3 *dest): a point 1200 units along the straight line when clear, else along facing or facing +-0x2000 depending on side probes; only caller Creature_moveTo
+001097f8	combat_applyAreaDamage	(f inner, f outer, attacker, Vec3 *centre, minDmg, maxDmg, flags, descriptor): box query; for creature attackers asks vtable slot 20 (is enemy); damage falls off linearly between the radii; calls damage_apply 0x1e8230
+00109a60	Creature_relocateAlongClearRay	(f dist, creature, Vec3 *lookAt or 0): one g_randSeed draw picks the sweep direction, up to 32 headings tested by ray and ground height, moves the creature to the best one, relinks it in the grid (0x14f028), optionally faces lookAt

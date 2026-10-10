@@ -1,0 +1,206 @@
+# area: ui  (0x1c0000-0x1e8000)  inventory and menus, shop, character sheet, HUD, front end, game state
+# ---- inventory (translation unit ends at 0x1c5d28; its game-message handler 0x1bfdb0 is in the player area) ----
+001c00b8	inventory_runPanel	(panel) per-panel body of the inventoryRun task: closes when idle, lets another local player take the panel (sends msg 4), back button runs the *exitInventoryNotify script hook
+001c0360	inventory_onJoinPanel	handler of inventory msg 4 (panel, slot, levelUp): attaches a player to a panel; with levelUp it re-sends msg 9 and writes record +0xed/+0xee
+001c0920	inventory_drawPlayerModel	draws the character on the stand; picks idle animation by weapon class; called by inventoryDraw and the stats task
+001c1108	inventory_drawTask	draw task "inventoryDraw" (priority 50) registered by menu_openInventory
+001c1868	inventory_giveItem	(slot, item, flag) adds an item record to the right bag; first recall potion sets the PLAY_firstRecall quest variable and shows a hint; callers are script give* built-ins and pickups
+001c1cb0	inventory_removeItem	(slot, index, bag, count) removes from a bag and fixes every equipped-item pointer in the record; 14 callers incl. script remove* and Player_usePotion
+001c2548	inventory_onStatPoint	handler of inventory msg 6 (slot, stat): 0-3 spend a stat point, 4-7 raise a stat for free, 8 adds a skill point
+001c2648	inventory_onSkillPoint	handler of inventory msg 7 (slot, a, value); spends skill points and rebuilds the ability list
+001c27c0	inventory_equipItem	handler of inventory msg 1 (slot, item address, flag); class check, equip sounds for the local slot, runs *bowEquipNotify / *weaponEquipNotify hooks
+001c2f20	inventory_unequipItem	handler of inventory msg 2 (slot, item address)
+001c3350	inventory_unrefItem	(slot, item) clears record pointers +0x4434/+0x443c that name the item; in one branch re-sends inventory msg 1
+001c3b20	inventory_loadTextures	looks up the inventory, icon and HUD textures by name (called from 0x1bfbc8)
+001c3f08	inventory_selectIdleAnim	(slot, animState, flag) picks the inventory idle animation from the race lump and weapon class
+001c41d8	inventory_isEquipped	(recordOffset, item) 1 when the item address is in one of the record's equipped-item pointers
+001c42a0	inventory_resetPanels	zeroes the 4 panel structs at 0x4f4040 (0x74 bytes each)
+001c4310	inventory_dropItem	handler body of inventory msg 0 (slot, index, bag, count, ...): removes the item and creates the dropped object; also used by shop sell
+001c4948	inventory_checkEquipAllowed	Inferred: class/race test used before equipping and when drawing the grid; reads record +0x50
+001c4e88	inventory_refreshPanelModel	(slot, panel, flag) restarts the stand animation for a panel
+001c4fa8	inventory_shareQuestItems	(slot) called by save_load: drops quest-flagged items from other players and copies this player's to them
+001c5100	inventory_close	(panel) removes both inventory tasks, sends menu-state msg 2 and weapon-class msg 5, clears g_paused and g_localMenuOpen
+001c5358	inventory_staticInitDestroy	compiler-generated static init/destroy body of this translation unit
+001c54d0	inventory_unloadResources	frees the menu lump and restores the render state; called when the shop closes
+001c5570	invmsg_send5	unreferenced sender of inventory msg 5 (slot, weapon class)
+001c55a8	invmsg_send9	unreferenced sender of inventory msg 9 (slot, level)
+001c55e0	invmsg_sendUsePotion	unreferenced sender of inventory msg 10 (slot + four 16-bit values)
+001c5628	invmsg_sendJoinPanel	sends inventory msg 4 (panel, slot, levelUp)
+001c5668	inventory_resetPanelCursors	clears two fields in each player's panel struct; called from game_clearLevel
+001c56a8	inventory_runTask	draw-type task "inventoryRun" (priority 50); runs one or two panels
+001c5738	invmsg_sendCombine	sends inventory msg 8 (slot, three 32-bit values) from the workshop combine screen
+001c5780	invmsg_sendStatPoint	sends inventory msg 6 (slot, stat)
+001c57b8	invmsg_sendSkillPoint	sends inventory msg 7 (slot, a, value)
+001c5800	invmsg_sendEquip	sends inventory msg 1 (slot, item address, flag)
+001c5840	invmsg_sendUnequip	sends inventory msg 2 (slot, item address)
+001c5880	inventory_countItemByName	(name, slot) sums stack counts over the three bags
+001c59a8	inventory_registerMsgHandler	registers 0x1bfdb0 and stores the channel id at 0x866d18
+001c59d0	invmsg_sendDrop	sends inventory msg 0 (13 bytes)
+001c5a18	inventory_equipSlotOf	(slot, item) index of the item in the 17 equipped pointers, or -100000000
+001c5a70	inventory_findItemBySubstring	(slot, text, outIndex, outBag) last item whose name is contained in text
+001c5b48	inventory_findLocalPlayerPressing	(mask) first living local slot whose raw pad edge bits match
+001c5ce8	inventory_staticInit	entry in the static constructor table (0x3e99c8)
+001c5d08	inventory_staticDestroy
+# ---- shop and the shared item-list panel (translation unit 0x1c5d28-0x1d19c8) ----
+001c5d28	shop_onMsg	handler of the shop channel: 0 buy (slot, address of a stock record), 1 sell (slot, index, bag, count ...)
+001c5f78	shopmsg_sendBuy	finds the chosen item in the local stock tables and sends its ADDRESS in shop msg 0
+001c6068	shop_task	draw task "shop" (priority 50): closes if the shopper died, otherwise runs and draws the shop
+001c6570	menu_cursorInput	list cursor movement with auto-repeat and browse sound; masks direction bits out of the raw pad
+001c6938	itemList_tabInput	confirm on a tab picks the page under the free cursor (panel +0x50); zeroes word +0x10 of both the raw and the lockstep pad
+001c6bb8	shop_buySellMenu	draws and runs the Buy / Sell choice
+001c7128	ui_insertThousandsSeparators	in-place; comma or period by language flag 0x44fddc
+001c7218	itemList_drawGold	(record, panelPos) prints record +0xe4 with separators; also clamps it to 99,999,999 (store at 0x1c72dc)
+001c7350	itemList_drawWeight	prints carried weight as "%.1f/%d"
+001c74c0	shop_run	per-player shop logic: second local player may join, exit handling
+001c7af8	shop_openOrStock	(slot, mode, _) mode 0 opens the shop UI for a local slot (g_paused only offline); mode 1-3 generates the three stock lists for a store level
+001c8a00	shop_restockByGold	regenerates the stock lists from player 0's gold; only caller is the never-created ShopDaemon
+001c8c10	itemList_dropBlockerFilter	object filter callback installed (0x14a610) around the drop-space box query in itemList_input
+001c8d38	itemList_drawItemInfo	item description pane (damage, armour, gem slots)
+001cb098	itemList_drawButtonHelp	button legend for the current context
+001cc130	itemList_drawRows	Inferred from the stack-count formats and the call to itemList_drawItemInfo
+001cc7e0	itemList_drawGrid	Inferred from the inventrybox textures
+001cd208	itemList_draw	(slot, mode, panel, panelStruct) draws one player's item panel
+001cd988	itemList_input	(slot, mode, panel, panelStruct) reads the raw pad of a local slot and sends equip/unequip/drop/buy/sell/combine messages
+001cec68	itemList_analogCursor	moves the free cursor of a panel with the raw local analogue stick
+001ceeb8	inventory_combineGems	handler of inventory msg 8: workshop combine of gems into an item
+001d0ab8	shop_close	clears shop flags, removes the task; net game sends close msg, offline clears g_paused
+001d0b90	workshop_input	combine screen input for a local slot; sends inventory msg 8
+001d10b0	shop_staticInitDestroy
+001d1240	shop_buy	(slot, stockRecord) takes gold (price x 0.6, 0.45 or 1.0) and gives the item; runs on every machine from shop msg 0
+001d1330	shopmsg_sendSell	unreferenced copy of the shop msg 1 sender (itemList_input builds it inline)
+001d13a0	shop_registerMsgHandler	registers shop_onMsg, channel id at 0x86a6a0
+001d13c8	ShopDaemon_ctor	no caller and no pointer to it: the class is never created
+001d1490	ShopDaemon_run	vtable slot 4: restocks every 120 ticks of the per-machine tick counter 0x44fdd0
+001d14c8	itemList_update	(panel, slot, panelStruct, mode) input, then draw when the slot is local
+001d1380	menu_resetListState	zeroes the cursor/scroll fields of a panel struct
+001d1988	shop_staticInit
+001d19a8	shop_staticDestroy
+# ---- character sheet: stats, skills, level up (translation unit 0x1d19c8-0x1d7778) ----
+001d1bc0	stats_task	draw task "stats" (priority 50); only the unreferenced stats_open registers it
+001d1db8	stats_screen	stat/skill page drawn from itemList_draw; writes record +0xed/+0xee locally, sends stat-point messages, removes stats_task
+001d2eb8	stats_open	unreferenced; would set g_paused with no network test
+001d3150	player_giveExp	(slot, amount) level-ups add stat and skill points, refill hp and mana; called from simulation and from the hud_run cheat
+001d34ac	player_rebuildAbilities	recomputes max hp/mana and the ability records from skill ranks
+001d386c	quest_add	script addQuest: appends (title, text) to every player's quest list (record +0x41d0, count +0x43d0)
+001d3968	quest_remove	script removeQuest
+001d3adc	quest_clearAll
+001d3b78	skills_drawDescription
+001d436c	skills_nextRankCost	Inferred: cost from the class skill table 0x4ef530 and the current rank
+001d4414	skills_drawPercentLine	Inferred from the "%d%%" format; called from stats_screen
+001d4660	skills_screen	skill tree page; sends skill-point msg 7
+001d59f0	skills_drawTreeLines
+001d768c	stats_staticInitDestroy
+001d7738	stats_staticInit
+001d7758	stats_staticDestroy
+# ---- Weather object (0x1d7778-0x1d8ca0) ----
+001d7778	Weather_ctor	Inferred from caller 0x159c94 (object factory) and the vtable; parses particle keys via 0x1d7a18
+001d7a18	Weather_parseParams	reads keys psr psg psb ... pcount pspeed
+001d80b0	Weather_run	vtable slot 4 of class Weather
+001d8b78	weather_staticInitDestroy
+001d8c80	weather_staticInit
+# ---- HUD (translation unit 0x1d8ca0-0x1e08f0) ----
+001d8ca0	hud_onMsg	handler of the game channel (0x86ac40): 0 quick-slot, 1 assign spell, 2 menu state, 3 recall, 4 player left, 5 savepoint, 6 disconnect request, 7 new world, 8 start exit countdown, 9/10 checksums, 11 load level, 12 medal ack, 13 quick-cast warning
+001d9250	hudmsg_sendNewWorld	sends game msg 7 (level name)
+001d92a0	hud_showMessage	(text, frames, slot or -1, force) one-line HUD message; only on the machine that owns slot
+001d9330	hud_clearMessage
+001d934c	hud_tickMessage
+001d93b0	hud_drawBossMeter
+001d9830	hud_showHelpMessage	(slot, title, body) modal help box for a local slot; net game sends menu-state msg 2
+001d9954	hud_showPlayerNotice	(slot, title, body, panel) per-player notice box, local slot only
+001d99f0	hud_drawPromptBox	Inferred: small prompt box used by Player_interact (display mode) and the spell selector
+001d9cd4	hud_drawPlayerStatus	health/mana/exp bars, potion counts, level-up icon
+001dadc0	hud_confirmBox	yes/no box driven by a local pad; returns the choice
+001db3c8	hud_drawControllerOut	"controller removed" message for local players
+001dc194	hud_registerMsgHandler	registers hud_onMsg (channel id 0x86ac40) and the empty handler 0x1e01b0 (channel id 0x86aa60)
+001dc1d0	hud_addTasks	registers hud_run (run, priority 50) and the HUD draw task (draw, priority 51)
+001dc23c	hud_removeTasks
+001dc268	hud_addGoldFloater	(slot, worldPos, amount) gold pickup that flies to the counter; credited after ~43 frames by hud_tickGold
+001dc5f4	hud_flushGold	credits every pending floater at once (level clear)
+001dc708	hud_drawGold
+001dcb80	hud_tickGold	run-task part: moves expired floaters into record +0xe4 an eighth at a time
+001dcc78	help_task	draw task "HelpMessage": draws and dismisses help boxes from the raw local pads; clears g_paused on dismiss without a network test
+001dd240	help_addTask
+001dd270	hud_spellSelect	quick-cast selector drawn and run from hud draw; sends game msgs 0, 1, 13
+001de06c	hudmsg_sendQuickSlot	game msg 0 (slot, a, b)
+001de0a4	hudmsg_sendQuickCastWarn	game msg 13 (slot, a)
+001de0dc	hudmsg_sendMenuState	game msg 2 (slot, state, flag); only in a net game
+001de138	hudmsg_sendRecall	game msg 3 (slot)
+001de16c	hudmsg_sendPlayerLeft	game msg 4 (slot)
+001de1a0	hudmsg_sendSavepoint	game msg 5 (32-bit value); caller is the savepoint code at 0x28cdd0
+001de1e0	hudmsg_sendDisconnectRequest	game msg 6 (first local slot)
+001de25c	hudmsg_sendExitCountdown	game msg 8
+001de28c	hud_onQuickSlot	handler of game msg 0: writes record +0x4a84/+0x4a85
+001de340	hud_onQuickCastWarn	handler of game msg 13
+001de3ec	hudmsg_sendAssignSpell	game msg 1 (slot, b, 32-bit, 64-bit)
+001de430	hudmsg_sendChecksumStart	game msg 9, host only
+001de598	hudmsg_sendLoadLevel	game msg 11 (name)
+001de5ec	hudmsg_sendMedalAck	game msg 12
+001de61c	hud_onAssignSpell	handler of game msg 1: writes the ability records at record +0x4440
+001df248	hud_drawMessageBox	(title, body, ...) centred box used by HUD, front end and memory-card screens
+001df578	hud_drawLetterbox
+001df5d0	hud_setFade	(on) fade level 0 or 0x80
+001df5ec	hud_stepFade	(delta) moves the fade level and draws the overlay
+001df668	hud_setCompassTarget	script showCompass; ignored while a menu or dialog is open on this machine
+001df720	hud_drawCompass
+001dfaa0	hud_setBust	script showBust; same local gate as the compass
+001dfb6c	hud_drawBust
+001e0108	nullmsg_send0	unreferenced; sends a single 0 byte on channel 0x86aa60
+001e0134	nullmsg_sendShopClosed	sends (1, first local slot) on channel 0x86aa60, whose handler 0x1e01b0 is an empty function
+001e01b8	hud_drawNetCamPrompt
+001e03c0	hud_resetNotices
+001e0480	hud_startPlayerPick	(a, padSlot) starts the pick-a-player list used by the mission menu
+001e04b4	hud_runPlayerPick	run-task part; reads the lockstep pad of the picking player
+001e0698	hud_drawMedalPrompt
+001e07f0	hud_staticInitDestroy
+001e08d0	hud_staticInit
+# ---- front end and game state (start of the game.cc unit, which continues past 0x1e8000) ----
+001e08f0	frontend_run	run task "frontend" (priority 25): main menu, game type, players, difficulty, mode, net host/client, options, credits; offline and net game setup
+001e1f34	frontend_start	(fromGame) registers frontend_run, clears g_paused and menu flags
+001e2168	frontend_stop	removes the task, ends any cutscene, frees selection data
+001e21e0	frontend_startNetGame	Inferred from callees net_gameInit and net_launchTransfer
+001e24ac	frontend_startIntro	unreferenced; queues level "intro"
+001e2510	frontend_openControlConfig
+001e259c	frontend_controlConfigRun	controller configuration screen
+001e318c	frontend_mainMenuTable
+001e31c0	debug_missionEditor	pause-menu debug page: edits difficulty, evil/decision bits, mission availability and medals directly
+001e3ba0	frontend_startPlayerSelect	clears g_paused, opens player selection, queues the hub
+001e3cf4	frontend_allocScratch
+001e3d2c	frontend_freeScratch
+001e3ff0	minimap_applyMode
+001e40a8	minimap_blipColor	callback: colour by object class and player slot
+001e42e0	minimap_draw	called from drawWorld; raw local pads cycle the map mode at 0x4f8400
+001e4e88	game_clearLevel	tears a level down ("gameclear"): closes menus, flushes gold floaters, clears g_paused
+001e5148	game_loadPlayerLumps
+001e55c0	game_loadLevel	loads lumps and objects for a level; copies g_randSeed into g_cosmeticSeed part-way through
+001e6238	config_setDefaults	(player or -1) default volumes, controller maps, options
+001e6428	config_backup	copies the live options to a scratch block
+001e6b68	game_initCamera	sets the camera pointer 0x4f8450 and the confirm/cancel button masks by region
+001e6cc0	game_addCoreTasks	registers camera (run 11), drawWorld (draw 30) and the help task; resets game state
+001e7068	hud_loadIcons
+001e78d0	game_drawBackdrop	Inferred: draws a level model centred on the camera position; called from drawWorld
+001e7a48	noSaveZone_filter	object callback used by game_inNoSaveZone
+001e7b78	game_inNoSaveZone	true when recall/save is blocked: dialog open, PvP, a mounted player, or an object named noSaveZone nearby
+001e7c40	sound_playFoley	footstep and armour foley sequences (fs_water, foly_plate ...); variation from g_cosmeticSeed
+001e7e40	sound_playHit	builds a hit sound name from material and damage type and plays it on the target
+# ---- globals owned by this area ----
+0041b4f8	g_menuOpenFlag	set to 1 by every full-screen menu on this machine, 0 when it closes
+0041b4fc	g_menuInputLockout	frames during which menus read a dummy pad
+0041b50c	g_shopOpen
+0041b510	g_inFrontend
+0041b518	g_playerNoticeOpen	u8[4]
+0041b928	g_helpMessageOpen	u8
+0041bfb8	g_btnCancelMask
+0041bfbc	g_btnConfirmMask
+004f4040	g_itemPanels	4 x 0x74: +0x34 owner slot, +0x4c state, +0x50 page
+004f6948	g_netExitCountdown	s16; while non-zero the HUD draw task sends disconnect requests and then leaves the session
+004f694a	g_exitCountdown	set by game msg 8
+004f66ac	g_hudFade
+004f66e0	g_hudMessageFrames
+004f6b78	g_frontendState
+004f6b7c	g_frontendMenu	current menu item table
+004f8400	g_minimapMode	0-2; saved in the save file
+00866d18	g_invMsgChannel
+00866e78	g_shopStock	3 lists x (64 x 0x48 item records + count) = 3 x 0x1208
+0086a6a0	g_shopMsgChannel
+0086a918	g_goldFloaters	8 x 0x24
+0086ace8	g_goldPending	int[4]
