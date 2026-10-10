@@ -33,6 +33,29 @@
         "-fomit-frame-pointer"
       ],
       "evidence": "Complete leaf at 0x00108968 through 0x0010896f: return plus delay slot; previous routine ends at 0x00108967 and next routine starts at 0x00108970. Direct caller at 0x001bd484 consumes the integer result at 0x001bd49c. Authored constant-return contract; original name and signedness are not established. No argument/global accesses or calls. Match applies only to this common-MIPS leaf, not general R5900 ABI support."
+    },
+    {
+      "id": "function_001a1860",
+      "address": "0x001a1860",
+      "size": 8,
+      "source": "reconstructed/function_001a1860.cpp",
+      "symbol": "champions_rebuild_001a1860",
+      "language": "c++",
+      "compiler_args": [
+        "--no-default-config",
+        "--target=mipsel-none-elf",
+        "-march=mips3",
+        "-mabi=32",
+        "-O2",
+        "-ffreestanding",
+        "-fno-pic",
+        "-mno-abicalls",
+        "-fno-stack-protector",
+        "-fno-exceptions",
+        "-fno-rtti",
+        "-fomit-frame-pointer"
+      ],
+      "evidence": "Observed complete body 0x001a1860-0x001a1867: clears the first 32-bit word through the first argument, returning without other memory operations or calls. Previous body ends at 0x001a185b with alignment padding before this entry; next body begins at 0x001a1868. Direct call sites include 0x0011c1d8, 0x0011c1e4 and 0x0011c1f0. Snapshot label handle_initEmpty is retained only as context; full surrounding type and original C++ identity are not asserted."
     }
   ]
 }
