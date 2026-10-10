@@ -15,7 +15,9 @@ session; launching two offline instances does not test lockstep or prediction.
 2. Match emulator CPU/timing, frame-limit, audio, graphics and game settings for the
    initial experiment. Disable unrelated patches, cheats and speed changes on both
    clients. Record every relevant setting and patch-file hash; keep them fixed across
-   each baseline/treatment pair.
+   each baseline/treatment pair. The current `.pnach` contains two independent test
+   sections: cutscene audio and alive-list rebuilding. Record each section's enabled
+   state on each client; selecting the file alone does not isolate a treatment.
 3. Preserve an untouched copy of each client's starting save locally. Record save
    hashes, characters, equipment, skills, difficulty, progression and initial player
    slots. Restore that same per-client starting state before every trial. Do not
@@ -55,8 +57,8 @@ ending. Animation drift alone therefore does not prove the arena desync's cause.
 
 | Condition | Configuration on both clients |
 |---|---|
-| A: baseline | All patches disabled; verify original instruction at `0x199448` if a debugger is available |
-| B: audio treatment | Only `patches/SLUS-20973_4028A55F.pnach` enabled, with its cutscene-audio section enabled; verify the intended instruction at `0x199448` was applied |
+| A: baseline | Both cutscene-audio and alive-list sections disabled, along with all other patches; verify original instructions at `0x199448` and `0x1b3504` if possible |
+| B: audio treatment | Only the cutscene-audio section enabled; alive-list section explicitly disabled; verify treatment at `0x199448` and original instruction at `0x1b3504` if possible |
 
 Do not infer application from the filename or checkbox alone. Use the emulator's
 patch report and, where available, an instruction readback. Record unavailable
@@ -87,10 +89,69 @@ but not causation of shared-state divergence. Failure despite the patch means th
 change was insufficient under the recorded conditions; it does not automatically
 identify a different cause.
 
+## Co-op prediction-copy death: alive-list patch
+
+This tests G11–G13. The immediate death-time rebuild can change alive-player state
+while predicting; a resulting co-op desync is still **Inferred**, not reproduced.
+The second section in `patches/SLUS-20973_4028A55F.pnach`, “Net test: alive list only
+rebuilt at end of frame,” changes the call site at `0x1b3504`. Its intended tradeoff
+is to defer list updates until the simulated frame ends. This is a test hypothesis,
+not confirmation that every same-frame death consumer remains correct.
+
+| Condition | Audio section | Alive-list section | Required cases |
+|---|---|---|---|
+| Baseline | Disabled | Disabled | Ordinary confirmed death; observed prediction-copy death |
+| Alive-list treatment | Disabled | Enabled | Same ordinary and prediction-death cases from matched starts |
+
+Disable all other patches. Verify the treatment/original instruction at `0x1b3504`
+and that the audio instruction at `0x199448` remains original, using the patch report
+and readback when available. Do not run both sections together in this comparison.
+
+1. Use a co-op session with both PvP mode flags inactive. Record initial alive count,
+   player identities and slots, health and scene. Restore the same per-client saves
+   and repeat the input sequence for each condition. A boss-arena death is a useful
+   scene to test, but scene choice alone does not demonstrate this trigger.
+2. Establish an ordinary confirmed death control. Separately attempt a prediction
+   death using a documented damage sequence or the kill-plane path described in G12.
+   If delay is required, use one supported, recorded network-delay setting for the
+   complete comparison. Confirm instrumentation actually sees the local copy with
+   flag `0x20000` process lethal damage while the real player is still alive in the
+   confirmed simulation. Record whether the G12 kill-plane or copied pending-damage
+   route was observed; do not infer it solely from a death animation.
+3. On each client log count `0x4f8420` and list at `0x4f8440`, expressed as stable
+   player identities/slots. Sample before and after the prediction pass, at entry to
+   the next confirmed frame's run tasks, and after that frame's end-of-frame rebuild.
+   Compare matching confirmed frame numbers **and phases** across clients, alongside
+   real-player death state, shared seed and positions. Record a later confirmed death
+   separately from an earlier prediction-only death. Raw pointer equality or two
+   screenshots taken at different simulation phases is insufficient evidence.
+4. Run at least **three attempts per condition and death case with A as victim**,
+   then the same with B as victim. Count attempts that actually reached the prediction
+   trigger separately. Keep session-host assignment fixed within a series. Continue
+   through revival, transition or party-wipe handling and at least 600 further
+   confirmed frames where progression permits.
+5. Verify real deaths remain effective: after the confirmed frame's rebuild, both
+   clients must agree on the dead player's exclusion and surviving slots. Check that
+   later revival restores membership and that party-wipe/progression behavior still
+   works when exercised. The patch's claimed delay of up to one frame must be measured;
+   missed or persistently stale membership is a regression, not an acceptable delay.
+
+Treatment support requires an observed baseline prediction trigger with persistent
+list disagreement, matched treatment triggers without that disagreement, and preserved
+confirmed-death behavior. No observed trigger or no baseline failure means
+**inconclusive about a fix**. An alive-list discrepancy without a hash mismatch supports
+that narrower state finding; do not claim the full desync cause is proven.
+
+The alive-list section does **not** patch the separate PvP mana, score or orb side
+effects in G9/G10. Success in this co-op experiment must not be reported as a PvP
+reward fix.
+
 ## PvP prediction-copy death
 
-This tests G9/G10 separately. **No PvP fix patch is supplied in the current patch
-folder.** The audio patch is not a treatment for this hypothesis; keep it disabled.
+This tests G9/G10 separately. **No patch for the PvP reward side effects is supplied
+in the current patch folder.** Keep both the audio and alive-list sections disabled
+for this baseline. The alive-list patch changes a nearby call site but does not guard
+PvP mana, score or orb rewards.
 
 1. Exercise each of the two PvP modes separately, identifying which mode flag is
    active (`0x4f711c` or `0x4f7120`). Preserve starting health, mana, score, equipment,

@@ -186,7 +186,8 @@ class DoctorTests(unittest.TestCase):
         with patch.dict(os.environ, {'JAVA_HOME': '/explicit/jdk', 'UNRELATED_SECRET': 'do-not-print'}), \
              patch.object(doctor, 'version_probe', return_value=('openjdk version "21"', None)) as probe:
             report = doctor.build_report(arguments())
-        self.assertTrue(str(probe.call_args.args[0]).startswith('/explicit/jdk'))
+        java_name = 'java.exe' if doctor.platform.system() == 'Windows' else 'java'
+        self.assertEqual(Path(probe.call_args.args[0]), Path('/explicit/jdk') / 'bin' / java_name)
         self.assertNotIn('do-not-print', json.dumps(report))
 
 
