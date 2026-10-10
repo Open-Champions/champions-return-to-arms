@@ -181,7 +181,7 @@ class RebuildTests(unittest.TestCase):
 
     def test_source_and_flags_cannot_claim_assembly_or_external_inputs(self):
         for source in ('asm("nop");', '#include "private.h"\n', '#import "private.h"\n', '%:include "private.h"\n', '#inc\\\nlude "private.h"\n', '#define X asm\n'):
-            self.source.write_text(source, encoding='utf-8')
+            self.source.write_text(source, encoding='utf-8', newline='\n')
             with self.subTest(source=source), self.assertRaises(ValueError):
                 self.load()
         self.source.write_text('extern "C" unsigned candidate() {return 1;}', encoding='utf-8')
@@ -200,7 +200,7 @@ class RebuildTests(unittest.TestCase):
             for marker in ('/*', '//'):
                 source = ('static const char* marker = "' + marker + '";\n'
                           + forbidden + '\n// */\n')
-                self.source.write_text(source, encoding='utf-8')
+                self.source.write_text(source, encoding='utf-8', newline='\n')
                 with self.subTest(forbidden=forbidden, marker=marker), self.assertRaises(ValueError):
                     rebuild.source_bytes(self.source)
 
@@ -213,7 +213,7 @@ class RebuildTests(unittest.TestCase):
             'auto value = 1\'000; auto hex = 0xF\'F;\n',
         ]
         for source in benign:
-            self.source.write_text(source, encoding='utf-8')
+            self.source.write_text(source, encoding='utf-8', newline='\n')
             with self.subTest(source=source):
                 self.assertEqual(rebuild.source_bytes(self.source), source.encode())
         # Comments separate tokens rather than joining them, but retain newlines.
@@ -221,7 +221,7 @@ class RebuildTests(unittest.TestCase):
         for source in ('// /*\n#include "value.hpp"\n// */\n',
                        '/* lead\ncomment */ #include "value.hpp"\n',
                        'asm/**/("nop");'):
-            self.source.write_text(source, encoding='utf-8')
+            self.source.write_text(source, encoding='utf-8', newline='\n')
             with self.subTest(source=source), self.assertRaises(ValueError):
                 rebuild.source_bytes(self.source)
 
@@ -249,7 +249,7 @@ class RebuildTests(unittest.TestCase):
             with self.subTest(prefix=prefix), self.assertRaisesRegex(ValueError, 'raw strings'):
                 rebuild.source_bytes(self.source)
         for source in ('"unterminated', "'unterminated", '/* unterminated', '"line\nbreak"'):
-            self.source.write_text(source, encoding='utf-8')
+            self.source.write_text(source, encoding='utf-8', newline='\n')
             with self.subTest(source=source), self.assertRaisesRegex(ValueError, 'unterminated'):
                 rebuild.source_bytes(self.source)
 
