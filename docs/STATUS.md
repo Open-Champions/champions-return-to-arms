@@ -18,7 +18,7 @@ understood: see the area document in `docs/` for what has actually been read.
 | audio-save | 210000–232000 | 293 | 172 | 76% | sound, save and load, mission menu, store |
 | monsters | 232000–2c3cd4 | 885 | 734 | 91% | monster classes and level objects (chests, traps, gates, savepoints) |
 | skills | 2c3cd4–320000 | 982 | 865 | 89% | Skill and Spell classes |
-| mainloop | 320000–323dcc | 39 | 2 | 4% | task scheduler and main loop |
+| mainloop | 320000–323dcc | 39 | 39 | 100% | task scheduler and main loop |
 | netlib | 323dcc–3b0000 | 2066 | 385 | 32% | lobby client, SOE UdpLibrary, AES, Sony SDK libraries |
 | runtime | 3b0000–3e6000 | 1460 | 0 | 0% | C and C++ runtime, type info, static constructors |
-| **all** | | 7732 | 3729 | 69% | |
+| **all** | | 7732 | 3766 | 70% | |

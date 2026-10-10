@@ -1,0 +1,86 @@
+# mainloop area, 0x320000-0x323dcc. Real module boundaries: movie player 0x31fdf4-0x320ea3, core.cc 0x320ea4-0x324287 (see docs/mainloop.md)
+# ---- movie player (starts at 0x31fdf4, outside this area's range) ----
+00320038	movie_packDmaTag	(out, spr, addr, irq, id, pce, qwc) packs one 64-bit DMA source-chain tag
+00320084	movie_packGifTag	(out, regs, nreg, flg, prim, pre, eop, nloop) packs one 128-bit GIF tag
+003200d4	movie_packGsReg	(out, regNo, value64) one GS address+data pair
+00320100	movie_packBitBltBuf	GS register 0x50 via movie_packGsReg
+00320130	movie_packTrxPos	GS register 0x51
+00320160	movie_packTrxReg	GS register 0x52
+0032018c	movie_packTrxDir	GS register 0x53
+003201b0	movie_startGifChain	(addr) writes DMA channel 2 TADR, QWC=0, CHCR=0x105
+003201ec	movie_waitForField	(n) busy-waits until vblank counter 0x44fd98 / 2 reaches n, pulling the counter back if it is ahead; not in ghidra_funcs.tsv, no references found
+00320238	movie_feedStream	finds entry g_movie+4 in lump g_movie+0, resets the decoder at 0x8eb018 and hands it the whole stream; clears g_movieFinished
+003202c0	movie_open	(lump, entry, loop, streamFile, indexEntry) fills g_movie, allocates work and stream buffers, creates the decoder, sets g_movieActive
+00320498	movie_isFinished	returns g_movieFinished
+003204a4	movie_hasQueued	1 when the queued descriptor 0x8eb078 is set; not in ghidra_funcs.tsv, no references found
+003204b4	movie_setSource	(lump, entry, loop) replaces the current descriptor and restarts; no callers found
+00320530	movie_queueNext	fills the queued descriptor 0x8eb078 (same five arguments as movie_open); no callers found
+003205c8	movie_enableAudioSync	g_movieAudioSync = 1, g_movieFrame = 0; not in ghidra_funcs.tsv, no references found
+003205e0	movie_disableAudioSync	g_movieAudioSync = 0; not in ghidra_funcs.tsv, no references found
+003205ec	movie_update	once per gfx_beginFrame while g_movieActive: services chunk reads, decodes one picture unless audio stream 2 is behind (audio_streamPosition), uploads it to the GS; returns 1 and sets g_movieFinished at the end
+00320dcc	movie_close	waits for the pending read, resets the decoder (0x373688, then 0x3735a0), frees the seven buffers, clears g_movieActive
+# ---- core.cc: per-slot UI ramps ----
+00320ea4	ui_startPulse	(index 0-3) g_uiPulse[index] = 2.0; callers are the pause menu, HUD notices and help boxes; readers multiply UI colours by it
+00320ec4	ui_restartFadeIn	(index 0-3) g_uiFadeIn[index] = 0; callers and readers are the dialog tasks (0x22f3d0, 0x230000-0x2306b0)
+# ---- core.cc: level entry ----
+00320edc	mainloop_loadRequestedWorld	stores the old level's state, splits g_pendingLevel at '_' into level and sub name, calls game_loadLevel, places and constructs the Player objects; asserts core.cc lines 346-430
+# ---- core.cc: boot screens (callbacks for mainloop_runModalCallback; return 1 when done) ----
+00321524	splash_legalScreen	draws the legal screen for the language byte 0x44fddc; done after 300 frames; no references found
+00321640	splash_soeLogo	done after 240 frames or on a button press of pad 0 or 1, which also sets g_skipSplash; passed by main at 0x3240fc
+00321700	splash_ubiLogo	done after 300 frames or on a button press; not in ghidra_funcs.tsv, no references found
+00321788	splash_introMovie	starts audio stream 0 and the intro movie, done when movie_isFinished or on a button press after 30 frames; passed by main at 0x324130
+00321870	mainloop_setAmbientCountdown	g_ambientCountdown = arg; not in ghidra_funcs.tsv, no references found
+# ---- core.cc: loading screen thread ----
+0032187c	loadscreen_renderLoop	thread entry: gfx_beginFrame / sprites / gfx_endFrame until g_loadscreenStop; this is what advances g_drawFrame during a load
+00321c9c	loadscreen_selectWorldAlias	(levelName) -> name used for the loading-screen lump; eleven hard-coded level name rewrites
+00321e60	loadscreen_start	draws cosmetic seed for the scroll phase, loads the level's loading lump (fallback lmiss.lmp), creates the thread on first use (priority 5, stack 0x8eb900), sets g_loadscreenActive
+003224d8	loadscreen_stop	sets g_loadscreenStop, spins until the thread status is 0x10, clears g_loadscreenActive
+# ---- core.cc: main loop ----
+00322520	mainloop_pollAmbientAudio	once per displayed frame: zeroes the 32 bytes at 0x4f7158, restarts level music on a random 4-6 minute countdown, re-queues the ambience stream every 16th frame when stream 0 is idle
+00322934	mainloop_startWarmup	g_warmupFrames = 10, g_warmupStartFrame = g_drawFrame; 9 callers (cutscene start and end, menus closing, save screens, level load)
+00322954	mainloop_startFadeWait	(n) g_fadeWaitFrames = n, g_fadeWaitStart = g_drawFrame; 9 callers (cutscene camera, camera, dialog, arena)
+00322998	mainloop_runSession	one front-end-or-game session, 0x322998-0x3235a7: registers the core tasks, then loops level change + frame until g_sessionExitCode is set; names.tsv main_loop (0x32316c) is an instruction inside it
+003235a8	splash_languageMenu	draws a five-entry language list and stores the choice in 0x44fddc; not in ghidra_funcs.tsv, no references found
+003236bc	mainloop_runModalCallback	(callback, blankFirst, teardown) private frame loop: begin frame, pad_readAll, callback, lump_pollAsync, g_simFrame++, end frame, sound_update, until the callback returns non-zero; runs no tasks
+003237f8	mainloop_runModalCallbackWithDisplayReset	(callback) same loop with blank-2 before and blank-1 after and no teardown; only caller is the net level-change path at 0x322d04
+003238f4	mainloop_bootCardStep	callback: save_daemonDraw, controller-removed notice after 180 frames; done when g_sessionExitCode is non-zero
+0032393c	mainloop_waitSaveStep	callback: memcard_tickSpinner, save_daemonDraw; done when 0x4f8f2c is zero
+0032396c	mainloop_runBootCardCheck	memcard_requestConfigLoad then mainloop_runModalCallback(mainloop_bootCardStep, 1, 1); called once by main
+0032399c	mainloop_findArgument	(argc, argv, name, wantValue) exact match from argv[1]; returns the match or the following argument
+00323a3c	mainloop_setupOfflinePlayersFromArguments	offline only: --pvp gives 4 players, --char/--female pick a class, then player_initNewCharacter per slot with fixed test names
+00323d70	dbg_scanIopMemory	Inferred: calls SIF RPC wrapper 0x35b6b0 for 0..0x200000 step 0x100 and flags results below 0x100 in the table at 0x8eda78; no references found
+# ---- globals owned by this module ----
+0041b508	g_sessionExitCode	s32; non-zero ends mainloop_runSession; main restarts the front end with mode 0, 1 or 2 for the values 1, 0x65, 0xc9
+0041b6d0	g_pendingLevel	char[]; "level" or "level_sub"; non-empty requests a level change and makes net_frameLoop skip its ticks (0x139fb4)
+0041b721	g_levelName	char[]; current level, written by mainloop_loadRequestedWorld
+0041b771	g_levelSubName	char[]; part of the request after '_', empty when none
+0041b7c2	g_prevLevelName	char[]; level (or level_sub) that was current before the last change
+0044fd48	g_lastSimTimerDelta	timer 0 counts spent in the simulation part of the last frame; written at 0x323288, no reader found
+0050602c	g_movieFinished
+00506030	g_movieReadSlot	s8; stream buffer (0/1) being read, -1 none
+00506031	g_moviePlaySlot	s8; stream buffer last handed to the decoder
+00506032	g_movieReadDone	completion flag passed to cd_readAsync
+00506033	g_movieActive	gfx_beginFrame calls movie_update while set
+00506034	g_movieAudioSync
+00506038	g_movieFrame	pictures decoded; compared with the audio position
+00506044	g_backgroundColor	clear colour passed to gfx_beginFrame; replaced by opaque black while a local menu, warm-up or fade wait is active
+00506048	g_warmupFrames	per machine; counts down only while terrain streaming is idle; forced to 0 after 1500 displayed frames
+0050604c	g_fadeWaitFrames	per machine; same countdown rule; read only by the main loop
+00506050	g_fadeWaitStart
+00506054	g_idleVoiceCountdown	set to 300 on entering a level with no stored state; a random local player speaks when it reaches 1
+00506058	g_flag505b00Delay	set to 20 by mainloop_loadRequestedWorld when the comm option flag 0x505b00 was set (and clears it); the flag is set again when this reaches 0
+00506060	g_uiPulse	float[4]; decays toward 1.0 by x0.8 per displayed frame
+00506070	g_uiFadeIn	float[4]; +0.12 per displayed frame up to 1.0
+00506080	g_warmupStartFrame
+00506084	g_skipSplash
+00506088	g_introMovieStarted
+0050608c	g_ambientCountdown	displayed frames until the next level-music restart
+00506090	g_loadscreenThread	thread id, -1 until first use
+00506094	g_loadscreenActive	s8; cut_runFrame and drawWorld test it
+00506098	g_loadscreenFrame
+0050609c	g_loadscreenPhase
+005060a0	g_loadscreenStop
+005060a4	g_netLaunchLatch	set once at 0x322d6c and never cleared: the developer-LAN launch block runs at most once per boot
+005060a8	g_terrainLateFrames	consecutive displayed frames with terrain flag 0x41c181 set; above 21 requests half-rate display
+00506100	g_argPlayerClass	int[4]; class per slot used by mainloop_setupOfflinePlayersFromArguments
+008eb060	g_movie	current descriptor {lump, entry, streamFile, index, chunk, loop}; queued copy at 0x8eb078; decoder object at 0x8eb018
