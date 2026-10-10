@@ -48,9 +48,11 @@ disc to use it. See [What may not be committed](CONTRIBUTING.md#what-may-not-be-
 
 ## Getting started
 
-You need Python 3, `llvm-objdump`, and [Ghidra](https://ghidra-sre.org/) with the
+You need Python 3, an `llvm-objdump` build with MIPS target support, and [Ghidra](https://ghidra-sre.org/) with the
 [ghidra-emotionengine-reloaded](https://github.com/chaoticgd/ghidra-emotionengine-reloaded)
-extension.
+extension. On macOS, the Apple Command Line Tools build tested here cannot disassemble
+this MIPS executable; the Homebrew `llvm@20` build can. Put its `bin` directory on your
+`PATH` before running the commands below. Check `llvm-objdump --version` for a MIPS target.
 
 ```bash
 # 1. Copy SLUS_209.73 from your own disc into the repository root. It is git-ignored.
@@ -59,7 +61,7 @@ shasum -a 256 SLUS_209.73
 
 # 2. Disassembly used by the Python tools
 mkdir -p disasm
-llvm-objdump -d -j .text --no-show-raw-insn --mcpu=mips3 SLUS_209.73 > disasm/text.asm
+llvm-objdump -d --disassemble-zeroes -j .text --no-show-raw-insn --mcpu=mips3 SLUS_209.73 > disasm/text.asm
 
 # 3. Ghidra project with the symbol map applied, and one decompiled file per function
 mkdir -p build ghidra/proj
@@ -70,6 +72,9 @@ analyzeHeadless ghidra/proj crta -process SLUS_209.73 -noanalysis -scriptPath gh
     -postScript DecompAll.java "$PWD/decomp/all" "$PWD/ghidra/scripts/extra_entries.txt" \
     -postScript ListFuncs.java "$PWD/ghidra_funcs.tsv"
 ```
+
+The `--disassemble-zeroes` flag preserves zero-valued instructions, including MIPS
+delay-slot no-ops; omitting it can leave gaps in the Python tools' input.
 
 Then, for example:
 
