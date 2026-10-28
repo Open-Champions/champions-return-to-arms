@@ -131,6 +131,7 @@ it with `py -3` in Windows PowerShell. Select compiler and game paths explicitly
 python3 tools/rebuild.py check
 python3 tools/rebuild.py candidates --limit 10
 python3 tools/rebuild.py verify --game /private/path/SLUS_209.73 --compiler /private/path/clang++
+python3 tools/rebuild.py verify --game /private/path/SLUS_209.73 --ee-gcc /private/path/ee-gcc
 python3 tools/rebuild.py progress --report work/rebuild/verification.json --json
 ```
 
@@ -156,6 +157,25 @@ The source gate distinguishes string/character literals from comments before che
 for directives or inline assembly. Unsupported lexical forms are rejected rather
 than guessed. Changing the verifier invalidates recorded receipts; freshly compile
 all recorded functions before publishing refreshed evidence.
+
+### EE GCC 2.96 entries
+
+A ledger entry may set `"toolchain": "ee-gcc-2.96"` to compile with the EE GCC
+`2.96-ee-001003-1` driver supplied through `--ee-gcc`. Its options come from a separate
+reviewed subset (`-O0`–`-O3`, `-Os`, `-G0` and a few `-fno-*` switches); the source gate is
+unchanged. Entries without `toolchain` remain Clang entries. A fresh verification of a
+mixed ledger needs both compilers; an entry whose compiler was not supplied is reported
+as failed rather than skipped.
+
+An entry may also record `"symbols"`, a map from each external name its source declares
+to that object's original address. With it, the verifier applies `R_MIPS_26`,
+`R_MIPS_HI16` and `R_MIPS_LO16` at the function's original address and then compares
+the complete extent. A relocation is resolved only from that map or from the candidate
+code section itself. Other relocation kinds, unpaired `HI16` records and unrecorded
+names are rejected. A wrong address yields a mismatch, not a pass. The addresses are
+evidence in their own right and belong to the reviewed ledger. Entries without
+`symbols` keep the relocation-free rule. Use `-G0`: GP-relative relocations are outside
+this scope.
 
 This deliberately limits the first usable cases; noncontiguous functions, unresolved
 relocations, jump-table/data dependencies and whole-program linking need additional

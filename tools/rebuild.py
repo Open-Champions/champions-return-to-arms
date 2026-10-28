@@ -2,7 +2,9 @@
 """Record original C++ function rebuilds against a privately supplied PS2 baseline.
 
 check validates the ledger; candidates lists small unclaimed Ghidra bodies;
-verify compiles self-contained C++ and compares complete function bytes;
+verify compiles self-contained C++ with Clang or the original EE GCC 2.96 and
+compares complete function bytes, after resolving relocations only from addresses
+recorded in the ledger;
 progress reports recorded matches, never whole-game linking or playability.
 No original bytes are included in reports or SVGs.
 """
@@ -21,6 +23,14 @@ import sys
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_LEDGER = ROOT / 'targets' / 'SLUS-20973' / 'rebuild.json'
 HASH = re.compile(r'^[0-9a-f]{64}$')
+IDENTIFIER = re.compile(r'[A-Za-z_][A-Za-z0-9_]*')
+TOOLCHAINS = ('clang', 'ee-gcc-2.96')
+# Compilers read these outside argv (Clang and GCC both honor the include paths).
+# Keep effective options tied to the reviewed ledger and never echo their values.
+ENVIRONMENT_OPTIONS = ('CCC_OVERRIDE_OPTIONS', 'CL', '_CL_', 'GCC_EXEC_PREFIX', 'COMPILER_PATH',
+                       'CPATH', 'C_INCLUDE_PATH', 'CPLUS_INCLUDE_PATH', 'DEPENDENCIES_OUTPUT',
+                       'SUNPRO_DEPENDENCIES')
+R_MIPS_26, R_MIPS_HI16, R_MIPS_LO16 = 4, 5, 6
 
 
 def digest(data):
@@ -92,7 +102,11 @@ class Elf32:
         require(len(indices) == 1, f'expected exactly one ELF {name} section')
         return indices[0], self.sections[indices[0]]
 
-    def function(self, symbol):
+    def function(self, symbol, place=None, symbols=None):
+        """Return a function's bytes, relocated to place when the ledger records symbols.
+
+        Without symbols the candidate code section must be relocation-free.
+        """
         require(self.kind == 1, 'compiled output must be a relocatable ELF object')
         matches = []
         for table_index, section in enumerate(self.sections):
@@ -112,14 +126,66 @@ class Elf32:
         require(section[2] & 4 and size > 0, 'function must have a nonempty executable extent')
         contents = self.section_data(index)
         require(start <= len(contents) and size <= len(contents) - start, 'function extent exceeds its section')
+        code = bytearray(contents[start:start + size])
         for table_index, relocation in enumerate(self.sections):
             if relocation[1] not in (4, 9) or relocation[7] != index:
                 continue
-            # Relocation widths vary (R_MIPS_64 writes eight bytes). Initially
-            # require an entirely relocation-free candidate code section, rather
-            # than guessing an instruction-width overlap for unknown kinds.
-            require(relocation[5] == 0, 'candidate code section contains unresolved relocations')
-        return contents[start:start + size]
+            # Relocation widths vary (R_MIPS_64 writes eight bytes). Without
+            # recorded symbols, require an entirely relocation-free candidate
+            # code section rather than guessing an overlap for unknown kinds.
+            require(relocation[5] == 0 or symbols is not None, 'candidate code section contains unresolved relocations')
+            if relocation[5]:
+                require(relocation[1] == 9 and relocation[9] == 8 and relocation[5] % 8 == 0,
+                        'only ELF REL relocation records are supported')
+                self.relocate(code, index, start, place, self.section_data(table_index), relocation[6], symbols)
+        return bytes(code)
+
+    def relocate(self, code, index, start, place, records, table_index, symbols):
+        """Apply R_MIPS_26/HI16/LO16 at the function's original address.
+
+        Every target comes from the ledger's symbol addresses or from the candidate
+        code section itself; any other kind or unrecorded target is rejected.
+        """
+        require(place is not None and 0 <= table_index < len(self.sections)
+                and self.sections[table_index][1] == 2, 'relocations need a symbol table and an address')
+        table = self.sections[table_index]
+        names, entries = self.section_data(table[6]), self.section_data(table_index)
+        pending = []
+        for offset in range(0, len(records), 8):
+            where, info = struct.unpack_from('<II', records, offset)
+            kind, number_ = info & 0xff, info >> 8
+            require(kind in (R_MIPS_26, R_MIPS_HI16, R_MIPS_LO16), f'unsupported relocation type {kind}')
+            require(where % 4 == 0, 'misaligned relocation')
+            if not start <= where < start + len(code):
+                continue
+            require(number_ < len(entries) // 16, 'relocation symbol index exceeds table')
+            name_offset, value, _, _, _, section = struct.unpack_from('<IIIBBH', entries, number_ * 16)
+            name = self.string(names, name_offset)
+            if name in symbols:
+                target = address(symbols[name])
+            else:
+                require(section == index, f'relocation against {name or "a section"} needs a ledger symbol address')
+                target = place - start + value
+            at = where - start
+            word, = struct.unpack_from('<I', code, at)
+            if kind == R_MIPS_26:
+                destination = target + ((word & 0x3ffffff) << 2)
+                require((destination ^ (place + at + 4)) & 0xf0000000 == 0, 'R_MIPS_26 target outside its 256 MiB region')
+                word = (word & 0xfc000000) | ((destination >> 2) & 0x3ffffff)
+            elif kind == R_MIPS_HI16:
+                pending.append((at, number_))
+                continue
+            else:
+                low = ((word & 0xffff) ^ 0x8000) - 0x8000
+                for high_at, high_symbol in pending:
+                    require(high_symbol == number_, 'R_MIPS_HI16 is not paired with its R_MIPS_LO16')
+                    high, = struct.unpack_from('<I', code, high_at)
+                    value_ = (target + ((high & 0xffff) << 16) + low) & 0xffffffff
+                    struct.pack_into('<I', code, high_at, (high & 0xffff0000) | ((value_ + 0x8000) >> 16 & 0xffff))
+                pending = []
+                word = (word & 0xffff0000) | ((target + low) & 0xffff)
+            struct.pack_into('<I', code, at, word)
+        require(not pending, 'R_MIPS_HI16 without a following R_MIPS_LO16')
 
 
 def source_code(text):
@@ -223,9 +289,24 @@ def load_ledger(path=DEFAULT_LEDGER, root=ROOT):
         source = local_path(root, item['source'])
         require(source.suffix in ('.cpp', '.cc', '.cxx'), 'source must be a C++ file')
         source_bytes(source)
-        require(isinstance(item['symbol'], str) and re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]*', item['symbol']), 'use an unmangled extern C symbol')
+        require(isinstance(item['symbol'], str) and IDENTIFIER.fullmatch(item['symbol']), 'use an unmangled extern C symbol')
+        toolchain = item.get('toolchain', 'clang')
+        require(toolchain in TOOLCHAINS, f'unsupported toolchain: {toolchain}')
+        symbols = item.get('symbols', {})
+        require(isinstance(symbols, dict) and all(isinstance(name, str) and IDENTIFIER.fullmatch(name)
+                                                  for name in symbols), 'symbols must map identifiers to addresses')
+        for value in symbols.values():
+            address(value)
         flags = item['compiler_args']
         require(isinstance(flags, list) and all(isinstance(flag, str) and flag.startswith('-') and '\0' not in flag for flag in flags), 'compiler_args must contain flags only (use = forms)')
+        if toolchain == 'ee-gcc-2.96':
+            gcc_allowed = {'-G0', '-fno-exceptions', '-fno-rtti', '-fno-builtin', '-fno-strict-aliasing',
+                           '-fno-schedule-insns', '-fno-schedule-insns2'}
+            for flag in flags:
+                require(flag in gcc_allowed or re.fullmatch(r'-O[0123s]', flag),
+                        f'unsupported compiler flag in initial ee-gcc scope: {flag}')
+            extents.append((entry, entry + length))
+            continue
         allowed = {'--no-default-config', '-ffreestanding', '-fno-pic', '-mno-abicalls',
                    '-fno-stack-protector', '-fno-exceptions', '-fno-rtti', '-fomit-frame-pointer',
                    '-fno-omit-frame-pointer', '-fno-builtin', '-fno-unwind-tables',
@@ -254,39 +335,52 @@ def baseline_bytes(game, ledger):
     return elf.section_data(index)
 
 
-def verify(ledger, index_hash, game, compiler, output_dir, root=ROOT):
-    baseline = baseline_bytes(game, ledger)
-    # Clang reads these outside argv, including with --no-default-config. Keep
-    # effective options tied to the reviewed ledger and never echo their values.
-    compiler_env = os.environ.copy()
-    for name in ('CCC_OVERRIDE_OPTIONS', 'CL', '_CL_'):
-        require(not compiler_env.get(name),
-                f'unset {name} before verification; environment compiler options are not recorded')
-        compiler_env.pop(name, None)
+def probe_compiler(toolchain, compiler, compiler_env):
     executable = shutil.which(str(compiler))
     require(executable is not None, f'compiler not found: {compiler}')
     executable = str(Path(executable).resolve())
-    probe = subprocess.run([executable, '--no-default-config', '--version'], capture_output=True,
-                           timeout=15, check=False, env=compiler_env)
+    # GCC 2.96 has no configuration files to disable.
+    flags = ['--no-default-config', '--version'] if toolchain == 'clang' else ['--version']
+    probe = subprocess.run([executable] + flags, capture_output=True, timeout=15, check=False, env=compiler_env)
     require(probe.returncode == 0, 'compiler version probe failed')
     version = (probe.stdout + probe.stderr).decode('utf-8', errors='replace').strip().splitlines()
+    return executable, {'name': Path(executable).name, 'sha256': digest(Path(executable).read_bytes()),
+                        'version': version[0] if version else 'unknown'}
+
+
+def verify(ledger, index_hash, game, compiler, output_dir, root=ROOT, ee_gcc=None):
+    baseline = baseline_bytes(game, ledger)
+    compiler_env = os.environ.copy()
+    for name in ENVIRONMENT_OPTIONS:
+        require(not compiler_env.get(name),
+                f'unset {name} before verification; environment compiler options are not recorded')
+        compiler_env.pop(name, None)
+    supplied = {'clang': compiler, 'ee-gcc-2.96': ee_gcc}
+    executables, identities = {}, {}
+    for toolchain in sorted({item.get('toolchain', 'clang') for item in ledger['functions']}):
+        if supplied[toolchain] is not None:
+            executables[toolchain], identities[toolchain] = probe_compiler(toolchain, supplied[toolchain], compiler_env)
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    report = {'schema_version': 1, 'scope': 'recorded-byte-exact-cpp-functions',
+    report = {'schema_version': 2, 'scope': 'recorded-byte-exact-cpp-functions',
               'target': ledger['target']['id'], 'baseline_sha256': ledger['target']['baseline_sha256'],
               'ledger_sha256': digest(canonical(ledger)), 'function_index_sha256': index_hash,
               'verifier_sha256': digest(Path(__file__).read_bytes()),
               'recorded_at': datetime.now(timezone.utc).isoformat(),
-              'compiler': {'name': Path(executable).name, 'sha256': digest(Path(executable).read_bytes()),
-                           'version': version[0] if version else 'unknown'}, 'functions': []}
+              'compilers': identities, 'functions': []}
     base = address(ledger['target']['text']['address'])
     for item in ledger['functions']:
         source = local_path(Path(root), item['source'])
-        result = {'id': item['id'], 'source_sha256': digest(source_bytes(source)),
+        toolchain = item.get('toolchain', 'clang')
+        result = {'id': item['id'], 'toolchain': toolchain, 'source_sha256': digest(source_bytes(source)),
                   'compiler_args': item['compiler_args'], 'status': 'failed'}
+        if toolchain not in executables:
+            result['reason'] = f'no compiler supplied for {toolchain}'
+            report['functions'].append(result)
+            continue
         obj = output_dir / (item['id'] + '.o')
         obj.unlink(missing_ok=True)  # Never accept a stale object from a failed compilation.
-        command = [executable] + item['compiler_args'] + ['-c', str(source), '-o', str(obj.resolve())]
+        command = [executables[toolchain]] + item['compiler_args'] + ['-c', str(source), '-o', str(obj.resolve())]
         try:
             compiled = subprocess.run(command, cwd=root, capture_output=True, timeout=120,
                                       check=False, env=compiler_env)
@@ -297,7 +391,7 @@ def verify(ledger, index_hash, game, compiler, output_dir, root=ROOT):
                 (output_dir / (item['id'] + '.log')).write_bytes(compiled.stdout + compiled.stderr)
             else:
                 object_data = obj.read_bytes()
-                code = Elf32(object_data).function(item['symbol'])
+                code = Elf32(object_data).function(item['symbol'], address(item['address']), item.get('symbols'))
                 result['object_sha256'] = digest(object_data)
                 require(len(code) == item['size'], 'emitted function extent differs from complete original body')
                 offset = address(item['address']) - base
@@ -312,11 +406,12 @@ def verify(ledger, index_hash, game, compiler, output_dir, root=ROOT):
 
 
 def recorded_matches(report, ledger, index_hash, root=ROOT):
-    require(report.get('schema_version') == 1 and report.get('scope') == 'recorded-byte-exact-cpp-functions', 'unsupported verification report')
+    require(report.get('schema_version') == 2 and report.get('scope') == 'recorded-byte-exact-cpp-functions', 'unsupported verification report')
     require(report.get('target') == ledger['target']['id'] and report.get('baseline_sha256') == ledger['target']['baseline_sha256'], 'report target/baseline mismatch')
     require(report.get('verifier_sha256') == digest(Path(__file__).read_bytes()), 'stale report: verifier changed')
     require(report.get('ledger_sha256') == digest(canonical(ledger)) and report.get('function_index_sha256') == index_hash, 'stale report: ledger or function index changed')
-    require(HASH.fullmatch(report.get('compiler', {}).get('sha256', '')) is not None, 'report lacks compiler hash')
+    compilers = report.get('compilers')
+    require(isinstance(compilers, dict), 'report lacks compiler identities')
     results = report.get('functions')
     require(isinstance(results, list) and len(results) == len(ledger['functions']), 'report must cover exactly the ledger functions')
     by_id = {item['id']: item for item in ledger['functions']}
@@ -329,7 +424,10 @@ def recorded_matches(report, ledger, index_hash, root=ROOT):
         require(result.get('source_sha256') == digest(source_bytes(local_path(Path(root), item['source'])))
                 and result.get('compiler_args') == item['compiler_args'], 'stale report: source or compiler flags changed')
         require(result.get('status') in ('matched', 'mismatched', 'failed'), 'invalid report status')
+        toolchain = item.get('toolchain', 'clang')
+        require(result.get('toolchain') == toolchain, 'stale report: toolchain changed')
         if result['status'] == 'matched':
+            require(HASH.fullmatch(compilers.get(toolchain, {}).get('sha256', '')) is not None, 'report lacks compiler hash')
             require(result.get('size') == item['size'] and HASH.fullmatch(result.get('object_sha256', ''))
                     and HASH.fullmatch(result.get('original_sha256', ''))
                     and result['original_sha256'] == result.get('rebuilt_sha256'), 'inconsistent match evidence')
@@ -372,7 +470,8 @@ def main(argv=None):
             child.add_argument('--json', action='store_true')
         if command == 'verify':
             child.add_argument('--game', type=Path, required=True)
-            child.add_argument('--compiler', required=True)
+            child.add_argument('--compiler', help='Clang++ for entries without an ee-gcc toolchain')
+            child.add_argument('--ee-gcc', help='EE GCC 2.96 driver for toolchain "ee-gcc-2.96" entries')
             child.add_argument('--output-dir', type=Path, default=ROOT / 'work/rebuild')
             child.add_argument('--report', type=Path)
         if command == 'progress':
@@ -399,7 +498,8 @@ def main(argv=None):
             candidates = candidates[:args.limit]
             print(json.dumps(candidates, indent=2) if args.json else '\n'.join(f'{item["address"]}\t{item["size"]}\t{item["name"]}' for item in candidates))
         elif args.command == 'verify':
-            report = verify(ledger, index_hash, args.game, args.compiler, args.output_dir)
+            require(args.compiler or args.ee_gcc, 'verify needs --compiler and/or --ee-gcc')
+            report = verify(ledger, index_hash, args.game, args.compiler, args.output_dir, ee_gcc=args.ee_gcc)
             destination = args.report or args.output_dir / 'verification.json'
             destination.parent.mkdir(parents=True, exist_ok=True)
             destination.write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
