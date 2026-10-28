@@ -15,16 +15,22 @@ import xml.etree.ElementTree as ET
 import rebuild
 
 
-def elf_fixture(code=b'\x01\x02\x03\x04', kind=1, symbol='candidate', relocation=False, symbol_size=None):
+def elf_fixture(code=b'\x01\x02\x03\x04', kind=1, symbol='candidate', relocation=False, symbol_size=None,
+                externs=(), relocations=()):
     # ELF32 records are assembled directly so tests do not require a MIPS compiler.
+    # externs become undefined symbols 2, 3, ...; relocations are (offset, type, symbol).
     names = b'\0.text\0.symtab\0.strtab\0.rel.text\0.shstrtab\0'
     strings = b'\0' + symbol.encode() + b'\0'
     symbols = b'\0' * 16 + struct.pack('<IIIBBH', 1, 0, len(code) if symbol_size is None else symbol_size, 0x12, 0, 1)
+    for name in externs:
+        symbols += struct.pack('<IIIBBH', len(strings), 0, 0, 0x10, 0, 0)
+        strings += name.encode() + b'\0'
+    records = b''.join(struct.pack('<II', offset, (index << 8) | kind) for offset, kind, index in relocations)
     parts = [(b'', 0, 0, 0, 0, 0, 0),
              (code, 1, 6, 0x1000 if kind == 2 else 0, 0, 0, 0),
              (symbols, 2, 0, 0, 3, 1, 16),
              (strings, 3, 0, 0, 0, 0, 0),
-             (struct.pack('<II', 0, 0x102) if relocation else b'', 9, 0, 0, 2, 1, 8),
+             (struct.pack('<II', 0, 0x102) if relocation else records, 9, 0, 0, 2, 1, 8),
              (names, 3, 0, 0, 0, 0, 0)]
     section_names = ('', '.text', '.symtab', '.strtab', '.rel.text', '.shstrtab')
     data = bytearray(52)
@@ -133,6 +139,54 @@ class RebuildTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'relocations'):
             rebuild.Elf32(bytes(data)).function('candidate')
 
+    def test_recorded_symbols_resolve_hi16_lo16_and_26_at_the_original_address(self):
+        # lui $2,0; lw $2,0($2); jal 0; nop -- data at 0x44fd44, callee 0x355490, local jump.
+        code = struct.pack('<5I', 0x3c020000, 0x8c420000, 0x0c000000, 0x08000000, 0)
+        relocations = ((0, 5, 2), (4, 6, 2), (8, 4, 3), (12, 4, 1))
+        elf = rebuild.Elf32(elf_fixture(code=code, externs=('D_0044FD44', 'func_00355490'), relocations=relocations))
+        symbols = {'D_0044FD44': '0x0044fd44', 'func_00355490': '0x00355490'}
+        self.assertEqual(struct.unpack('<5I', elf.function('candidate', 0x19d8a4, symbols)),
+                         (0x3c020045, 0x8c42fd44, 0x0c000000 | 0x355490 >> 2, 0x08000000 | 0x19d8a4 >> 2, 0))
+        with self.assertRaisesRegex(ValueError, 'relocations'):
+            elf.function('candidate')
+        with self.assertRaisesRegex(ValueError, 'func_00355490'):
+            elf.function('candidate', 0x19d8a4, {'D_0044FD44': '0x0044fd44'})
+
+    def test_unpaired_and_unsupported_relocations_are_rejected(self):
+        code = struct.pack('<2I', 0x3c020000, 0x8c420000)
+        for relocations, message in ((((0, 5, 2),), 'HI16'),
+                                     (((0, 5, 2), (4, 6, 1)), 'paired'),
+                                     (((4, 7, 2),), 'type 7'),
+                                     (((0, 2, 2),), 'type 2')):
+            elf = rebuild.Elf32(elf_fixture(code=code, externs=('D_0044FD44',), relocations=relocations))
+            with self.subTest(message=message), self.assertRaisesRegex(ValueError, message):
+                elf.function('candidate', 0x1000, {'D_0044FD44': '0x0044fd44'})
+
+    def test_ee_gcc_entries_use_their_own_flags_compiler_and_receipt(self):
+        item = self.ledger['functions'][0]
+        item.update({'toolchain': 'ee-gcc-2.96', 'compiler_args': ['-Os', '-G0'], 'symbols': {}})
+        ledger, index, index_hash = self.load()
+        with self.compiler_fixture() as calls:
+            report = rebuild.verify(ledger, index_hash, self.game, None, self.output, self.root, ee_gcc=self.compiler)
+        self.assertEqual(calls[0][1:], ['--version'])
+        self.assertEqual((report['functions'][0]['toolchain'], report['functions'][0]['status']), ('ee-gcc-2.96', 'matched'))
+        self.assertEqual(rebuild.progress(ledger, index, index_hash, report, self.root)['functions_matched'], 1)
+        with self.compiler_fixture():
+            report = rebuild.verify(ledger, index_hash, self.game, self.compiler, self.output, self.root)
+        self.assertIn('no compiler supplied', report['functions'][0]['reason'])
+        for flags in (['--no-default-config'], ['-I../headers'], ['-Os', '-include=private.h'], ['-B/private']):
+            item['compiler_args'] = flags
+            with self.subTest(flags=flags), self.assertRaises(ValueError):
+                self.load()
+        item['compiler_args'] = ['-Os']
+        for symbols in ({'bad name': '0x1000'}, {'D_1': 'nowhere'}, ['D_1']):
+            item['symbols'] = symbols
+            with self.subTest(symbols=symbols), self.assertRaises(ValueError):
+                self.load()
+        item['toolchain'] = 'ee-gcc-3.2'
+        with self.assertRaisesRegex(ValueError, 'toolchain'):
+            self.load()
+
     def test_wrong_baseline_hash_fails_before_compiler_probe(self):
         ledger, _, index_hash = self.load()
         self.game.write_bytes(b'wrong original')
@@ -148,7 +202,7 @@ class RebuildTests(unittest.TestCase):
 
     def test_environment_compiler_options_fail_before_running_compiler(self):
         ledger, _, index_hash = self.load()
-        for name in ('CCC_OVERRIDE_OPTIONS', 'CL', '_CL_'):
+        for name in rebuild.ENVIRONMENT_OPTIONS:
             with self.subTest(name=name), patch.dict(os.environ, {name: 'private-option-value'}):
                 with self.compiler_fixture() as calls, self.assertRaises(ValueError) as failure:
                     rebuild.verify(ledger, index_hash, self.game, self.compiler, self.output, self.root)

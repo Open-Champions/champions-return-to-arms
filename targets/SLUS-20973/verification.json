@@ -1,20 +1,23 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "scope": "recorded-byte-exact-cpp-functions",
   "target": "SLUS-20973-v2.00",
   "baseline_sha256": "292f6f48e3609c0026def2307d76c222cd5b389303d53b89b0e107d7b1dcd675",
   "ledger_sha256": "d35b24ecc3e842d0d572d34c0a89c565d3a2f050dbb9f15a5727010f3db4f429",
   "function_index_sha256": "4c597317e64e41bc48752b4b69dbadf6d7eb592004c94bed22842bc0e63d0ac3",
-  "verifier_sha256": "3c5deb9baba4c493fcfc0ba6318b6729f066a93c29e58a8e47b0947dad1c3a93",
-  "recorded_at": "2026-10-10T11:42:06.238911+00:00",
-  "compiler": {
-    "name": "clang-20",
-    "sha256": "01ac721d7f35bb9a1c74b4a17c6253fd645e1602a7322a47003eec1de00a8bd0",
-    "version": "Homebrew clang version 20.1.8"
+  "verifier_sha256": "151914b6ce95ed97b6b87bb41dcb63959193369adc79abbdb5cfc9946216bf08",
+  "recorded_at": "2026-10-28T01:14:42.973909+00:00",
+  "compilers": {
+    "clang": {
+      "name": "clang-20",
+      "sha256": "1de411117bc312cea499998e8502238b66468de5fd37fbe740a6d624dbbb0a77",
+      "version": "Homebrew clang version 20.1.8"
+    }
   },
   "functions": [
     {
       "id": "function_00108968",
+      "toolchain": "clang",
       "source_sha256": "011c59139966f40a284e7fec153ee08c5033cf32233d031f35af9c771ff7ae17",
       "compiler_args": [
         "--no-default-config",
@@ -38,6 +41,7 @@
     },
     {
       "id": "function_001a1860",
+      "toolchain": "clang",
       "source_sha256": "d7fedb6060f5d21e4ffdfa709d265a6564570ae8b34ecd8803679a6471548324",
       "compiler_args": [
         "--no-default-config",
@@ -61,6 +65,7 @@
     },
     {
       "id": "function_00207438",
+      "toolchain": "clang",
       "source_sha256": "0bc71bd1765fb8f87604db5e4068f139939856bff57434cfb6bae69aead2c80a",
       "compiler_args": [
         "--no-default-config",
@@ -84,6 +89,7 @@
     },
     {
       "id": "function_00207308",
+      "toolchain": "clang",
       "source_sha256": "4fb6f61b5a4b2a2bca46b5a49339d2ac41237fcb8888859bb3866f0f93567173",
       "compiler_args": [
         "--no-default-config",
@@ -107,6 +113,7 @@
     },
     {
       "id": "function_00207310",
+      "toolchain": "clang",
       "source_sha256": "73ca1a5863c6a56a81d39cbd78caaf10b3fc118bc181a6c53ae3604d880d9792",
       "compiler_args": [
         "--no-default-config",
@@ -130,6 +137,7 @@
     },
     {
       "id": "function_00208b94",
+      "toolchain": "clang",
       "source_sha256": "bcffd3a13544e4231441ae824296cb24ec5fd0e2435579a1a3b0f19b01714be5",
       "compiler_args": [
         "--no-default-config",
@@ -153,6 +161,7 @@
     },
     {
       "id": "function_001707b0",
+      "toolchain": "clang",
       "source_sha256": "9f33b11d1c69ab32607b277c9e482fab28d7e662be9e8208aa78c702740328dc",
       "compiler_args": [
         "--no-default-config",
@@ -176,6 +185,7 @@
     },
     {
       "id": "function_00155108",
+      "toolchain": "clang",
       "source_sha256": "96cc9f68fa1b848da4fe58817ad9c59968b0a0508bea41550fd007a20d1d5263",
       "compiler_args": [
         "--no-default-config",
